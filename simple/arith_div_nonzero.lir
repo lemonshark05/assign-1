@@ -1,0 +1,7 @@
+fn main() -> int {
+let _t1:int
+entry:
+  _t1 = $arith div 30 6
+  $ret _t1
+}
+

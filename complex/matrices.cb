@@ -1,0 +1,156 @@
+// matrix operations
+
+extern print: (int) -> _;
+
+struct matrix {
+    data: &&int,
+    rows: int,
+    cols: int
+}
+
+fn zero(n: int, m: int) -> &matrix {
+    let A: &matrix;
+    A = new matrix;
+    A.data = new &int n;
+    A.rows = n;
+    A.cols = n;
+
+    while n > 0 {
+        A.data[n - 1] = new int m;
+        n = n - 1;
+    }
+
+    return A;
+}
+
+fn I(n: int) -> &matrix {
+    let I: &matrix = zero(n, n);
+
+    while n > 0 {
+        I.data[n - 1][n - 1] = 1;
+        n = n - 1;
+    }
+
+    return I;
+}
+
+fn assertEq(a: int, b: int) -> _ {
+    let p: &int;
+    if a != b {
+        *p = 0;
+    }
+    return;
+}
+
+fn add(A: &matrix, B: &matrix) -> &matrix {
+    let C: &matrix, i: int, j: int;
+
+    assertEq(A.rows, B.rows);
+    assertEq(A.cols, B.cols);
+
+    C = zero(A.rows, A.cols);
+
+    while i < C.rows {
+        j = 0;
+        while j < C.cols {
+            C.data[i][j] = A.data[i][j] + B.data[i][j];
+            j = j + 1;
+        }
+        i = i + 1;
+    }
+
+    return C;
+}
+
+fn neg(A: &matrix) -> &matrix {
+    let C: &matrix, i: int, j: int;
+
+    C = zero(A.rows, A.cols);
+
+    while i < C.rows {
+        j = 0;
+        while j < C.cols {
+            C.data[i][j] = - A.data[i][j];
+            j = j + 1;
+        }
+        i = i + 1;
+    }
+
+    return C;
+}
+
+fn mul(A: &matrix, B: &matrix) -> &matrix {
+    let C: &matrix, i: int, j: int, k: int;
+
+    assertEq(A.cols, B.rows);
+
+    C = zero(A.rows, B.cols);
+
+    while i < A.rows {
+        j = 0;
+        while j < A.cols {
+            k = 0;
+            while k < B.cols {
+                C.data[i][k] = C.data[i][k] + A.data[i][j] * B.data[j][k];
+                k = k + 1;
+            }
+            j = j + 1;
+        }
+        i = i + 1;
+    }
+
+    return C;
+}
+
+// a + bi represented as a 2×2 matrix
+fn complexRepr(a: int, b: int) -> &matrix {
+    let z: &matrix = zero(2, 2);
+
+    z.data[0][0] = a;
+    z.data[0][1] = -b;
+    z.data[1][0] = b;
+    z.data[1][1] = a;
+
+    return z;
+}
+
+fn printM(A: &matrix) -> _ {
+    let i: int, j: int;
+
+    
+    while i < A.rows {
+        j = 0;
+        while j < A.cols {
+            print(A.data[i][j]);
+            j = j + 1;
+        }
+        i = i + 1;
+    }
+
+    return;
+}
+
+fn trace(A: &matrix) -> int {
+    let t: int, i: int;
+
+    assertEq(A.rows, A.cols);
+
+    while i < A.rows {
+        t = t + A.data[i][i];
+        i = i + 1;
+    }
+
+    return t;
+}
+
+fn main() -> int {
+    let a: &matrix, b: &matrix;
+
+    a = add(complexRepr(3, 3), I(2));
+    b = mul(a, a);
+
+    printM(a);
+    printM(b);
+
+    return trace(b);
+}

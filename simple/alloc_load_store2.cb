@@ -1,0 +1,6 @@
+fn main() -> int {
+  let y: &int;
+  y = new int;
+  *y = 42;
+  return *y;
+}

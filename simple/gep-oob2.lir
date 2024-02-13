@@ -1,0 +1,14 @@
+fn main() -> int {
+let _t1:&int, _t2:int, _t3:int, _t4:&int, _t5:int, i:int, x:&int
+entry:
+  i = $copy 5
+  x = $alloc i [_alloc1]
+  _t2 = $arith sub 0 i
+  _t1 = $gep x _t2
+  $store _t1 4
+  _t3 = $arith sub 0 i
+  _t4 = $gep x _t3
+  _t5 = $load _t4
+  $ret _t5
+}
+

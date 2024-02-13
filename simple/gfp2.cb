@@ -1,0 +1,16 @@
+// expected: 47
+
+struct node {
+  value: int,
+  next: &node
+}
+
+fn main() -> int {
+  let p: &node;
+  p = new node;
+  p.next = new node;
+  p.value = 7;
+  p.next.value = 4;
+
+  return p.value + 10 * p.next.value;
+}

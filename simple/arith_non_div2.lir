@@ -1,0 +1,9 @@
+fn main() -> int {
+let _t1:int, _t2:int, _t3:int
+entry:
+  _t1 = $arith mul 3 3
+  _t2 = $arith mul 4 4
+  _t3 = $arith add _t1 _t2
+  $ret _t3
+}
+

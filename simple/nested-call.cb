@@ -1,0 +1,11 @@
+fn square(x: int) -> int{
+  return x * x;
+}
+
+fn hypo(x: int, y: int) -> int {
+  return square(x) + square(y);
+}
+
+fn main() -> int {
+  return hypo(3, 4);
+}

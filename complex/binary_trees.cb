@@ -1,0 +1,159 @@
+// binary prefix trees
+
+extern print: (int) -> _;
+
+struct node {
+    left: &node,
+    right: &node,
+    parent: &node,
+    value: int
+}
+
+struct tree {
+    root: &node,
+    size: int
+}
+
+// precondition: n > 0
+fn log2(n: int) -> int {
+    let l: int = 0;
+
+    while n > 1 {
+        l = l + 1;
+        n = n / 2;
+    }
+
+    return l;
+}
+
+// precondition: l >= 0
+fn exp2(l: int) -> int {
+    let n: int = 1;
+
+    while l > 0 {
+        l = l - 1;
+        n = n * 2;
+    }
+
+    return n;
+}
+
+fn mod(a: int, b: int) -> int {
+    return a - (a / b) * b;
+}
+
+fn getBit(n: int, bit: int) -> int {
+    while bit > 1 {
+        n = n / 2;
+        bit = bit - 1;
+    }
+
+    return n - ((n / 2) * 2) != 0;
+}
+
+fn insert(h: &tree, k: int, v: int) -> _ {
+    let parent: &node, node: &node;
+    let next: int, depth: int, bits: int;
+
+    if h.root == nil {
+        if k != 0 {
+            print(99);
+            // cause a deliberate crash
+            k = h.root.value;
+        }
+        h.root = new node;
+        h.root.value = v;
+        h.size = 1;
+        return;
+    }
+
+    next = k;
+    depth = log2(next);
+    bits = next - exp2(depth);
+
+    node = h.root;
+
+    while depth > 0 {
+        // print(1000 + depth * 100 + getBit(bits, depth));
+        if getBit(bits, depth) {
+            if node.right == nil {
+                node.right = new node;
+                node.right.parent = node;
+            }
+            node = node.right;
+        } else {
+            if node.left == nil {
+                node.left = new node;
+                node.left.parent = node;
+            }
+            node = node.left;
+        }
+        depth = depth - 1;
+    }
+
+    node.value = v;
+    
+    return;
+}
+
+fn readAndRemove(h: &tree, i: int) -> int {
+    let last: &node;
+    let next: int, depth: int, bits: int;
+
+    //  print(10000000);
+
+    depth = log2(i);
+    bits = i - exp2(depth);
+
+    last = h.root;
+    //  print(h.size);
+    //  print(bits);
+    //  print(depth);
+
+    while depth > 0 {
+        // print(1000 + depth * 100 + getBit(bits, depth));
+        if getBit(bits, depth) {
+            last = last.right;
+        } else {
+            last = last.left;
+        }
+        depth = depth - 1;
+    }
+
+    // print(- i);
+    // print(last != nil);
+    // print(last == h.root);
+    // print(last.parent != nil);
+
+    if last == h.root {
+        h.root = nil;
+        return last.value;
+    }
+
+    if last.parent.left == last {
+        last.parent.left = nil;
+    } else {
+        last.parent.right = nil;
+    }
+
+    return last.value;
+}
+
+fn main() -> int {
+    let i: int = 0, h: &tree;
+    h = new tree;
+
+    while i < 128 {
+        insert(h, i, i * i);
+        i = i + 1;
+    }
+
+    i = i - 1;
+
+    while i > 0 {
+        print(readAndRemove(h, i));
+        i = i - 1;
+    }
+
+    return 0;
+}

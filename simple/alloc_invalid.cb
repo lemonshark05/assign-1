@@ -1,0 +1,6 @@
+fn main() -> int {
+  let x: &int, i: int;
+  i = -5;
+  x = new int i;
+  return 0;
+}

@@ -1,0 +1,49 @@
+fn main() -> int {
+let _t1:int, _t2:int, _t3:int, _t4:int, _t5:int, _t6:int, _t7:int, _t8:int, _t9:int, x:int, y:int
+bb1:
+  _t8 = $arith mul x 10
+  _t9 = $arith add _t8 y
+  $ret _t9
+
+bb2:
+  _t2 = $cmp eq y 0
+  $branch _t2 bb5 bb6
+
+bb3:
+  _t5 = $cmp eq y 0
+  $branch _t5 bb8 bb9
+
+bb4:
+  _t4 = $arith add x 1
+  x = $copy _t4
+  $jump bb1
+
+bb5:
+  _t3 = $arith add x 5
+  y = $copy _t3
+  $jump bb4
+
+bb6:
+  y = $copy 4
+  $jump bb4
+
+bb7:
+  _t6 = $arith sub y 1
+  y = $copy _t6
+  _t7 = $arith sub x y
+  x = $copy _t7
+  $jump bb1
+
+bb8:
+  x = $copy 9
+  $jump bb7
+
+bb9:
+  y = $copy 3
+  $jump bb7
+
+entry:
+  _t1 = $cmp eq x 0
+  $branch _t1 bb2 bb3
+}
+

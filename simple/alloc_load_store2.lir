@@ -1,0 +1,9 @@
+fn main() -> int {
+let _t1:int, y:&int
+entry:
+  y = $alloc 1 [_alloc1]
+  $store y 42
+  _t1 = $load y
+  $ret _t1
+}
+

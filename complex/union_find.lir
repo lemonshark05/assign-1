@@ -1,0 +1,184 @@
+struct UF {
+  parent:&int
+  rank:&int
+}
+
+find:&(&UF, int) -> int
+mkUF:&(int) -> &UF
+union:&(&UF, int, int) -> _
+
+extern print:(int) -> _
+
+fn find(uf:&UF, n:int) -> int {
+let _lo1:int, _ret21:int, _t10:&int, _t11:int, _t12:int, _t13:&&int, _t14:&int, _t15:&int, _t16:int, _t17:int, _t18:&&int, _t19:&int, _t2:&&int, _t20:&int, _t3:&int, _t4:&int, _t5:int, _t6:int, _t7:int, _t8:&&int, _t9:&int, p:int, r:int
+bb1:
+  $branch _lo1 bb4 bb5
+
+bb2:
+  _t8 = $gfp uf parent
+  _t9 = $load _t8
+  _t10 = $gep _t9 n
+  _t11 = $load _t10
+  _t12 = $cmp eq _t11 0
+  _lo1 = $copy _t12
+  $jump bb1
+
+bb4:
+  _ret21 = $copy n
+  $jump exit
+
+bb5:
+  _t13 = $gfp uf parent
+  _t14 = $load _t13
+  _t15 = $gep _t14 n
+  _t16 = $load _t15
+  p = $copy _t16
+  _t17 = $call_dir find(uf, p) then bb6
+
+bb6:
+  r = $copy _t17
+  _t18 = $gfp uf parent
+  _t19 = $load _t18
+  _t20 = $gep _t19 n
+  $store _t20 r
+  _ret21 = $copy r
+  $jump exit
+
+entry:
+  _t2 = $gfp uf parent
+  _t3 = $load _t2
+  _t4 = $gep _t3 n
+  _t5 = $load _t4
+  _t6 = $cmp eq _t5 n
+  _lo1 = $copy _t6
+  _t7 = $cmp eq _lo1 0
+  $branch _t7 bb2 bb1
+
+exit:
+  $ret _ret21
+}
+
+fn main() -> int {
+let _t1:&UF, _t2:int, _t3:int, _t4:int, i:int, j:int, n:int, uf:&UF
+bb1:
+  uf = $copy _t1
+  $call_dir union(uf, 1, 2) then bb2
+
+bb10:
+  $call_ext print(_t3)
+  _t4 = $arith add i 1
+  i = $copy _t4
+  $jump bb7
+
+bb2:
+  $call_dir union(uf, 3, 1) then bb3
+
+bb3:
+  $call_dir union(uf, 4, 5) then bb4
+
+bb4:
+  $call_dir union(uf, 6, 8) then bb5
+
+bb5:
+  $call_dir union(uf, 5, 8) then bb6
+
+bb6:
+  $jump bb7
+
+bb7:
+  _t2 = $cmp lt i n
+  $branch _t2 bb8 bb9
+
+bb8:
+  _t3 = $call_dir find(uf, i) then bb10
+
+bb9:
+  $ret 0
+
+entry:
+  n = $copy 10
+  _t1 = $call_dir mkUF(n) then bb1
+}
+
+fn mkUF(n:int) -> &UF {
+let _t1:&&int, _t2:&int, _t3:&&int, _t4:&int, uf:&UF
+entry:
+  uf = $alloc 1 [_alloc1]
+  _t1 = $gfp uf parent
+  _t2 = $alloc n [_alloc2]
+  $store _t1 _t2
+  _t3 = $gfp uf rank
+  _t4 = $alloc n [_alloc3]
+  $store _t3 _t4
+  $ret uf
+}
+
+fn union(uf:&UF, a:int, b:int) -> _ {
+let _t1:int, _t10:&int, _t11:int, _t12:int, _t13:&&int, _t14:&int, _t15:&int, _t16:int, _t17:&&int, _t18:&int, _t19:&int, _t2:int, _t20:&&int, _t21:&int, _t22:&int, _t23:&&int, _t24:&int, _t25:&int, _t26:int, _t27:int, _t28:&&int, _t29:&int, _t3:int, _t30:&int, _t4:&&int, _t5:&int, _t6:&int, _t7:int, _t8:&&int, _t9:&int, rA:int, rB:int
+bb1:
+  a = $copy _t1
+  _t2 = $call_dir find(uf, b) then bb2
+
+bb2:
+  b = $copy _t2
+  _t3 = $cmp eq a b
+  $branch _t3 bb4 bb3
+
+bb3:
+  _t4 = $gfp uf rank
+  _t5 = $load _t4
+  _t6 = $gep _t5 a
+  _t7 = $load _t6
+  rA = $copy _t7
+  _t8 = $gfp uf rank
+  _t9 = $load _t8
+  _t10 = $gep _t9 b
+  _t11 = $load _t10
+  rB = $copy _t11
+  _t12 = $cmp gt rA rB
+  $branch _t12 bb6 bb5
+
+bb4:
+  $jump exit
+
+bb5:
+  _t16 = $cmp eq rA rB
+  $branch _t16 bb8 bb7
+
+bb6:
+  _t13 = $gfp uf parent
+  _t14 = $load _t13
+  _t15 = $gep _t14 b
+  $store _t15 a
+  $jump exit
+
+bb7:
+  _t28 = $gfp uf parent
+  _t29 = $load _t28
+  _t30 = $gep _t29 a
+  $store _t30 b
+  $jump exit
+
+bb8:
+  _t17 = $gfp uf parent
+  _t18 = $load _t17
+  _t19 = $gep _t18 b
+  $store _t19 a
+  _t20 = $gfp uf rank
+  _t21 = $load _t20
+  _t22 = $gep _t21 a
+  _t23 = $gfp uf rank
+  _t24 = $load _t23
+  _t25 = $gep _t24 a
+  _t26 = $load _t25
+  _t27 = $arith add _t26 1
+  $store _t22 _t27
+  $jump exit
+
+entry:
+  _t1 = $call_dir find(uf, a) then bb1
+
+exit:
+  $ret 
+}
+

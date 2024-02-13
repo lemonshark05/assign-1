@@ -1,0 +1,6 @@
+bb1:
+_t1 -> (NegInf, PosInf)
+
+entry:
+_t1 -> (NegInf, PosInf)
+

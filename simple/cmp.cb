@@ -1,0 +1,11 @@
+fn foo() -> _ { return; }
+
+fn main() -> int {
+    let p: &() -> _, q: &() -> _, x: int, r: &int;
+    p = foo;
+    r = new int;
+    return (x > -2) + 2 * (
+        (p == q) + 2 * (
+            (p != q) + 2 * (r == nil)
+    ));
+}

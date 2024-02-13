@@ -1,0 +1,28 @@
+// expected: 4
+
+struct foo {
+  f1: int,
+  f2: int
+}
+
+fn fun(a: int, b: &int, c: &foo, d: &int) -> &int {
+    a = a + *b;
+    a = a * c.f1;
+    a = a / c.f2;
+    *d = a;
+    return d;
+}
+
+fn main() -> int {
+    let x: int, p: &int, q: &int, f: &foo;
+    x = 1;
+    p = new int;
+    q = new int x;
+    f = new foo;
+    *p = 4;
+    f.f1 = 5;
+    f.f2 = 6;
+    *q = 5;
+
+  return *(fun(x, p, f, q));
+}

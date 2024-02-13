@@ -1,0 +1,13 @@
+// expected: 5
+// print: 10 10
+
+extern print: (int) -> _;
+
+fn foo() -> int { print(10); return 4; }
+
+fn main() -> int {
+  let x: int;
+  foo();
+  x = foo();
+  return x + 1;
+}

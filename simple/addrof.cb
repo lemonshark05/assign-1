@@ -1,0 +1,8 @@
+fn main() -> int {
+  let p: &int, x: int;
+  p = &x;
+  *p = 3;
+  *p = *p + 2;
+  return x;
+}
+

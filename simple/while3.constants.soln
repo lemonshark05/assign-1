@@ -1,0 +1,65 @@
+bb1:
+_t1 -> Top
+_t2 -> Top
+_t3 -> Top
+_t4 -> Top
+_t5 -> Top
+_t6 -> Top
+x -> Top
+y -> Top
+
+bb2:
+_t1 -> Top
+_t2 -> Top
+_t3 -> Top
+_t4 -> Top
+_t5 -> Top
+_t6 -> Top
+x -> 3
+y -> 10
+
+bb3:
+_t1 -> Top
+_t2 -> Top
+_t3 -> Top
+_t4 -> Top
+_t5 -> Top
+_t6 -> Top
+_t7 -> Top
+_t8 -> Top
+x -> Top
+y -> Top
+
+bb4:
+_t1 -> Top
+_t2 -> Top
+_t3 -> Top
+_t4 -> Top
+_t5 -> Top
+_t6 -> Top
+x -> Top
+y -> Top
+
+bb5:
+_t1 -> Top
+_t2 -> Top
+_t3 -> Top
+_t4 -> Top
+_t5 -> Top
+_t6 -> Top
+x -> Top
+y -> Top
+
+bb6:
+_t1 -> Top
+_t2 -> Top
+_t3 -> Top
+_t4 -> Top
+_t5 -> Top
+_t6 -> Top
+x -> Top
+y -> Top
+
+entry:
+x -> 2
+

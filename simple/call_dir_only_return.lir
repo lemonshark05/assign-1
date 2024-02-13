@@ -1,0 +1,24 @@
+foo:&() -> int
+
+extern print:(int) -> _
+
+fn foo() -> int {
+entry:
+  $call_ext print(10)
+  $ret 4
+}
+
+fn main() -> int {
+let _t1:int, _t2:int, x:int
+bb1:
+  _t1 = $call_dir foo() then bb2
+
+bb2:
+  x = $copy _t1
+  _t2 = $arith add x 1
+  $ret _t2
+
+entry:
+  $call_dir foo() then bb1
+}
+

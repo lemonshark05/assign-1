@@ -1,0 +1,1 @@
+{"structs":{},"globals":[],"functions":{"main":{"id":"main","ret_ty":"Int","params":[],"locals":[],"body":{"entry":{"id":"entry","insts":[{"CallExt":{"lhs":null,"ext_callee":"print","args":[{"CInt":42}]}}],"term":{"Ret":{"CInt":0}}}}}},"externs":{"print":{"Function":{"ret_ty":null,"param_ty":["Int"]}}}}

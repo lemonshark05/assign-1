@@ -1,0 +1,25 @@
+struct list {
+  value: int,
+  next: &list
+}
+
+fn main() -> int {
+  let n: &list, m: &list;
+  let i: int = 3;
+
+  n = new list;
+  m = n;
+  while i > 0 {
+    n.next = new list;
+    n.value = i;
+    n = n.next;
+    i = i - 1;
+  }
+
+  while m != nil {
+    i = 10 * i + m.value;
+    m = m.next;
+  }
+
+  return i;
+}

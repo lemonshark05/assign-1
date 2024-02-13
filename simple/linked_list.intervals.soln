@@ -1,0 +1,45 @@
+bb1:
+_t1 -> [0, 1]
+_t7 -> (NegInf, 2]
+i -> (NegInf, 3]
+
+bb2:
+_t1 -> [0, 1]
+_t7 -> (NegInf, 2]
+i -> (NegInf, 2]
+
+bb3:
+_t1 -> [0, 1]
+_t7 -> (NegInf, 2]
+i -> (NegInf, 3]
+
+bb4:
+_t1 -> [0, 1]
+_t11 -> (NegInf, PosInf)
+_t12 -> (NegInf, PosInf)
+_t7 -> (NegInf, 2]
+_t8 -> [0, 1]
+_t9 -> (NegInf, PosInf)
+i -> (NegInf, PosInf)
+
+bb5:
+_t1 -> [0, 1]
+_t11 -> (NegInf, PosInf)
+_t12 -> (NegInf, PosInf)
+_t7 -> (NegInf, 2]
+_t8 -> [0, 1]
+_t9 -> (NegInf, PosInf)
+i -> (NegInf, PosInf)
+
+bb6:
+_t1 -> [0, 1]
+_t11 -> (NegInf, PosInf)
+_t12 -> (NegInf, PosInf)
+_t7 -> (NegInf, 2]
+_t8 -> [0, 1]
+_t9 -> (NegInf, PosInf)
+i -> (NegInf, PosInf)
+
+entry:
+i -> [3, 3]
+

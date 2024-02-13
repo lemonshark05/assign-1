@@ -1,0 +1,500 @@
+struct canvas {
+  data:&&int
+  height:int
+  width:int
+}
+
+struct shape {
+  draw:&(&canvas, &shape) -> _
+  h:int
+  r:int
+  w:int
+  x:int
+  y:int
+}
+
+circle:&(int, int, int) -> &shape
+drawCircle:&(&canvas, &shape) -> _
+drawRectangle:&(&canvas, &shape) -> _
+mkCanvas:&(int, int) -> &canvas
+printCanvas:&(&canvas) -> _
+rectangle:&(int, int, int, int) -> &shape
+
+extern print:(int) -> _
+extern printChar:(int) -> _
+
+fn circle(x:int, y:int, r:int) -> &shape {
+let _t1:&int, _t2:&int, _t3:&int, _t4:&&(&canvas, &shape) -> _, circle:&shape
+entry:
+  circle = $alloc 1 [_alloc4]
+  _t1 = $gfp circle x
+  $store _t1 x
+  _t2 = $gfp circle y
+  $store _t2 y
+  _t3 = $gfp circle r
+  $store _t3 r
+  _t4 = $gfp circle draw
+  $store _t4 drawCircle
+  $ret circle
+}
+
+fn drawCircle(canvas:&canvas, circle:&shape) -> _ {
+let _lo1:int, _lo2:int, _t10:int, _t11:&int, _t12:int, _t13:int, _t14:&int, _t15:int, _t16:int, _t17:int, _t18:int, _t19:int, _t20:int, _t21:&int, _t22:int, _t23:int, _t24:&int, _t25:int, _t26:int, _t27:&int, _t28:int, _t29:int, _t3:&int, _t30:int, _t31:&&&int, _t32:&&int, _t33:&&int, _t34:&int, _t35:int, _t36:int, _t37:&int, _t38:&int, _t39:&int, _t4:int, _t40:int, _t41:int, _t42:int, _t43:int, _t44:int, _t45:int, _t46:int, _t47:int, _t48:int, _t49:int, _t5:int, _t50:&int, _t51:int, _t52:int, _t53:&int, _t54:int, _t55:int, _t56:int, _t57:int, _t58:int, _t59:&int, _t6:int, _t60:int, _t61:int, _t62:&int, _t63:int, _t64:int, _t7:int, _t8:&int, _t9:int, i:int, j:int, r:int
+bb1:
+  $jump bb3
+
+bb10:
+  $branch _lo2 bb11 bb12
+
+bb11:
+  _t27 = $gfp circle x
+  _t28 = $load _t27
+  _t29 = $arith add j _t28
+  _t30 = $cmp gte _t29 0
+  $branch _t30 bb14 bb13
+
+bb12:
+  $jump bb6
+
+bb13:
+  _t47 = $arith add j 1
+  j = $copy _t47
+  _t48 = $cmp lte j r
+  _lo2 = $copy _t48
+  _t49 = $cmp neq _lo2 0
+  $branch _t49 bb16 bb15
+
+bb14:
+  _t31 = $gfp canvas data
+  _t32 = $load _t31
+  _t34 = $gfp circle y
+  _t35 = $load _t34
+  _t36 = $arith add i _t35
+  _t33 = $gep _t32 _t36
+  _t37 = $load _t33
+  _t39 = $gfp circle x
+  _t40 = $load _t39
+  _t41 = $arith add j _t40
+  _t38 = $gep _t37 _t41
+  _t42 = $arith mul i i
+  _t43 = $arith mul j j
+  _t44 = $arith add _t42 _t43
+  _t45 = $arith mul r r
+  _t46 = $cmp lte _t44 _t45
+  $store _t38 _t46
+  $jump bb13
+
+bb15:
+  $jump bb10
+
+bb16:
+  _t50 = $gfp circle x
+  _t51 = $load _t50
+  _t52 = $arith add j _t51
+  _t53 = $gfp canvas width
+  _t54 = $load _t53
+  _t55 = $cmp lt _t52 _t54
+  _lo2 = $copy _t55
+  $jump bb15
+
+bb17:
+  $jump bb3
+
+bb18:
+  _t59 = $gfp circle y
+  _t60 = $load _t59
+  _t61 = $arith add i _t60
+  _t62 = $gfp canvas height
+  _t63 = $load _t62
+  _t64 = $cmp lt _t61 _t63
+  _lo1 = $copy _t64
+  $jump bb17
+
+bb2:
+  _t8 = $gfp circle y
+  _t9 = $load _t8
+  _t10 = $arith add i _t9
+  _t11 = $gfp canvas height
+  _t12 = $load _t11
+  _t13 = $cmp lt _t10 _t12
+  _lo1 = $copy _t13
+  $jump bb1
+
+bb3:
+  $branch _lo1 bb4 bb5
+
+bb4:
+  _t14 = $gfp circle y
+  _t15 = $load _t14
+  _t16 = $arith add i _t15
+  _t17 = $cmp gte _t16 0
+  $branch _t17 bb7 bb6
+
+bb5:
+  $ret 
+
+bb6:
+  _t56 = $arith add i 1
+  i = $copy _t56
+  _t57 = $cmp lte i r
+  _lo1 = $copy _t57
+  _t58 = $cmp neq _lo1 0
+  $branch _t58 bb18 bb17
+
+bb7:
+  _t18 = $arith sub 0 r
+  j = $copy _t18
+  _t19 = $cmp lte j r
+  _lo2 = $copy _t19
+  _t20 = $cmp neq _lo2 0
+  $branch _t20 bb9 bb8
+
+bb8:
+  $jump bb10
+
+bb9:
+  _t21 = $gfp circle x
+  _t22 = $load _t21
+  _t23 = $arith add j _t22
+  _t24 = $gfp canvas width
+  _t25 = $load _t24
+  _t26 = $cmp lt _t23 _t25
+  _lo2 = $copy _t26
+  $jump bb8
+
+entry:
+  _t3 = $gfp circle r
+  _t4 = $load _t3
+  r = $copy _t4
+  _t5 = $arith sub 0 r
+  i = $copy _t5
+  _t6 = $cmp lte i r
+  _lo1 = $copy _t6
+  _t7 = $cmp neq _lo1 0
+  $branch _t7 bb2 bb1
+}
+
+fn drawRectangle(canvas:&canvas, rect:&shape) -> _ {
+let _lo1:int, _lo2:int, _t10:&int, _t11:int, _t12:int, _t13:&int, _t14:int, _t15:int, _t16:int, _t17:&int, _t18:int, _t19:int, _t20:&int, _t21:int, _t22:int, _t23:&&&int, _t24:&&int, _t25:&&int, _t26:&int, _t27:int, _t28:int, _t29:&int, _t3:&int, _t30:&int, _t31:&int, _t32:int, _t33:int, _t34:int, _t35:&int, _t36:int, _t37:int, _t38:int, _t39:&int, _t4:int, _t40:int, _t41:int, _t42:&int, _t43:int, _t44:int, _t45:int, _t46:&int, _t47:int, _t48:int, _t49:int, _t5:int, _t50:&int, _t51:int, _t52:int, _t53:&int, _t54:int, _t55:int, _t6:int, _t7:&int, _t8:int, _t9:int, i:int, j:int
+bb1:
+  $jump bb3
+
+bb10:
+  _t45 = $arith add i 1
+  i = $copy _t45
+  _t46 = $gfp rect h
+  _t47 = $load _t46
+  _t48 = $cmp lt i _t47
+  _lo1 = $copy _t48
+  _t49 = $cmp neq _lo1 0
+  $branch _t49 bb14 bb13
+
+bb11:
+  $jump bb8
+
+bb12:
+  _t39 = $gfp rect x
+  _t40 = $load _t39
+  _t41 = $arith add j _t40
+  _t42 = $gfp canvas width
+  _t43 = $load _t42
+  _t44 = $cmp lt _t41 _t43
+  _lo2 = $copy _t44
+  $jump bb11
+
+bb13:
+  $jump bb3
+
+bb14:
+  _t50 = $gfp rect y
+  _t51 = $load _t50
+  _t52 = $arith add i _t51
+  _t53 = $gfp canvas height
+  _t54 = $load _t53
+  _t55 = $cmp lt _t52 _t54
+  _lo1 = $copy _t55
+  $jump bb13
+
+bb2:
+  _t7 = $gfp rect y
+  _t8 = $load _t7
+  _t9 = $arith add i _t8
+  _t10 = $gfp canvas height
+  _t11 = $load _t10
+  _t12 = $cmp lt _t9 _t11
+  _lo1 = $copy _t12
+  $jump bb1
+
+bb3:
+  $branch _lo1 bb4 bb5
+
+bb4:
+  j = $copy 0
+  _t13 = $gfp rect w
+  _t14 = $load _t13
+  _t15 = $cmp lt j _t14
+  _lo2 = $copy _t15
+  _t16 = $cmp neq _lo2 0
+  $branch _t16 bb7 bb6
+
+bb5:
+  $ret 
+
+bb6:
+  $jump bb8
+
+bb7:
+  _t17 = $gfp rect x
+  _t18 = $load _t17
+  _t19 = $arith add j _t18
+  _t20 = $gfp canvas width
+  _t21 = $load _t20
+  _t22 = $cmp lt _t19 _t21
+  _lo2 = $copy _t22
+  $jump bb6
+
+bb8:
+  $branch _lo2 bb9 bb10
+
+bb9:
+  _t23 = $gfp canvas data
+  _t24 = $load _t23
+  _t26 = $gfp rect y
+  _t27 = $load _t26
+  _t28 = $arith add i _t27
+  _t25 = $gep _t24 _t28
+  _t29 = $load _t25
+  _t31 = $gfp rect x
+  _t32 = $load _t31
+  _t33 = $arith add j _t32
+  _t30 = $gep _t29 _t33
+  $store _t30 1
+  _t34 = $arith add j 1
+  j = $copy _t34
+  _t35 = $gfp rect w
+  _t36 = $load _t35
+  _t37 = $cmp lt j _t36
+  _lo2 = $copy _t37
+  _t38 = $cmp neq _lo2 0
+  $branch _t38 bb12 bb11
+
+entry:
+  i = $copy 0
+  j = $copy 0
+  _t3 = $gfp rect h
+  _t4 = $load _t3
+  _t5 = $cmp lt i _t4
+  _lo1 = $copy _t5
+  _t6 = $cmp neq _lo1 0
+  $branch _t6 bb2 bb1
+}
+
+fn main() -> int {
+let _t1:&canvas, _t10:&&shape, _t11:&shape, _t12:&&shape, _t13:&shape, _t14:int, _t15:&&shape, _t16:&shape, _t17:&&shape, _t18:&shape, _t19:&&(&canvas, &shape) -> _, _t2:&&shape, _t20:&(&canvas, &shape) -> _, _t21:int, _t3:&shape, _t4:&&shape, _t5:&shape, _t6:&&shape, _t7:&shape, _t8:&&shape, _t9:&shape, canvas:&canvas, i:int, shapes:&&shape
+bb1:
+  canvas = $copy _t1
+  $call_ext printChar(10)
+  shapes = $alloc 6 [_alloc6]
+  _t2 = $gep shapes 0
+  _t3 = $call_dir circle(0, 0, 10) then bb2
+
+bb10:
+  $call_dir printCanvas(canvas) then bb12
+
+bb11:
+  _t21 = $arith add i 1
+  i = $copy _t21
+  $jump bb8
+
+bb12:
+  $ret 0
+
+bb2:
+  $store _t2 _t3
+  _t4 = $gep shapes 1
+  _t5 = $call_dir circle(100, 0, 10) then bb3
+
+bb3:
+  $store _t4 _t5
+  _t6 = $gep shapes 2
+  _t7 = $call_dir circle(100, 50, 10) then bb4
+
+bb4:
+  $store _t6 _t7
+  _t8 = $gep shapes 3
+  _t9 = $call_dir circle(0, 50, 10) then bb5
+
+bb5:
+  $store _t8 _t9
+  _t10 = $gep shapes 4
+  _t11 = $call_dir rectangle(20, 20, 10, 20) then bb6
+
+bb6:
+  $store _t10 _t11
+  _t12 = $gep shapes 5
+  _t13 = $call_dir rectangle(60, 20, 10, 20) then bb7
+
+bb7:
+  $store _t12 _t13
+  $jump bb8
+
+bb8:
+  _t14 = $cmp gte 5 i
+  $branch _t14 bb9 bb10
+
+bb9:
+  _t15 = $gep shapes i
+  _t16 = $load _t15
+  _t17 = $gep shapes i
+  _t18 = $load _t17
+  _t19 = $gfp _t18 draw
+  _t20 = $load _t19
+  $call_idr _t20(canvas, _t16) then bb11
+
+entry:
+  i = $copy 0
+  _t1 = $call_dir mkCanvas(100, 50) then bb1
+}
+
+fn mkCanvas(x:int, y:int) -> &canvas {
+let _t1:int, _t2:&&int, _t3:&int, _t4:int, _t5:&&&int, _t6:&int, _t7:&int, canvas:&canvas, data:&&int, i:int
+bb1:
+  _t1 = $cmp lt i y
+  $branch _t1 bb2 bb3
+
+bb2:
+  _t2 = $gep data i
+  _t3 = $alloc x [_alloc2]
+  $store _t2 _t3
+  _t4 = $arith add i 1
+  i = $copy _t4
+  $jump bb1
+
+bb3:
+  canvas = $alloc 1 [_alloc3]
+  _t5 = $gfp canvas data
+  $store _t5 data
+  _t6 = $gfp canvas height
+  $store _t6 y
+  _t7 = $gfp canvas width
+  $store _t7 x
+  $ret canvas
+
+entry:
+  i = $copy 0
+  data = $alloc y [_alloc1]
+  $jump bb1
+}
+
+fn printCanvas(canvas:&canvas) -> _ {
+let _t1:&int, _t10:int, _t11:&&&int, _t12:&&int, _t13:&&int, _t14:&int, _t15:&int, _t16:int, _t17:int, _t18:int, _t19:&int, _t2:int, _t20:int, _t21:int, _t22:int, _t3:int, _t4:int, _t5:&int, _t6:int, _t7:int, _t8:&int, _t9:int, i:int, j:int
+bb1:
+  _t1 = $gfp canvas width
+  _t2 = $load _t1
+  _t3 = $cmp lt j _t2
+  $branch _t3 bb2 bb3
+
+bb10:
+  _t17 = $arith add j 1
+  j = $copy _t17
+  $jump bb7
+
+bb11:
+  $call_ext printChar(46)
+  $jump bb10
+
+bb12:
+  $call_ext printChar(32)
+  $jump bb10
+
+bb13:
+  _t19 = $gfp canvas width
+  _t20 = $load _t19
+  _t21 = $cmp lt j _t20
+  $branch _t21 bb14 bb15
+
+bb14:
+  $call_ext printChar(45)
+  _t22 = $arith add j 1
+  j = $copy _t22
+  $jump bb13
+
+bb15:
+  $call_ext printChar(43)
+  $call_ext printChar(10)
+  $ret 
+
+bb2:
+  $call_ext printChar(45)
+  _t4 = $arith add j 1
+  j = $copy _t4
+  $jump bb1
+
+bb3:
+  $call_ext printChar(43)
+  $call_ext printChar(10)
+  $jump bb4
+
+bb4:
+  _t5 = $gfp canvas height
+  _t6 = $load _t5
+  _t7 = $cmp lt i _t6
+  $branch _t7 bb5 bb6
+
+bb5:
+  j = $copy 0
+  $call_ext printChar(124)
+  $jump bb7
+
+bb6:
+  $call_ext printChar(43)
+  j = $copy 0
+  $jump bb13
+
+bb7:
+  _t8 = $gfp canvas width
+  _t9 = $load _t8
+  _t10 = $cmp lt j _t9
+  $branch _t10 bb8 bb9
+
+bb8:
+  _t11 = $gfp canvas data
+  _t12 = $load _t11
+  _t13 = $gep _t12 i
+  _t14 = $load _t13
+  _t15 = $gep _t14 j
+  _t16 = $load _t15
+  $branch _t16 bb11 bb12
+
+bb9:
+  $call_ext printChar(124)
+  $call_ext printChar(10)
+  _t18 = $arith add i 1
+  i = $copy _t18
+  $jump bb4
+
+entry:
+  i = $copy 0
+  j = $copy 0
+  $call_ext printChar(43)
+  j = $copy 0
+  $jump bb1
+}
+
+fn rectangle(x:int, y:int, h:int, w:int) -> &shape {
+let _t1:&int, _t2:&int, _t3:&int, _t4:&int, _t5:&&(&canvas, &shape) -> _, rect:&shape
+entry:
+  rect = $alloc 1 [_alloc5]
+  _t1 = $gfp rect x
+  $store _t1 x
+  _t2 = $gfp rect y
+  $store _t2 y
+  _t3 = $gfp rect h
+  $store _t3 h
+  _t4 = $gfp rect w
+  $store _t4 w
+  _t5 = $gfp rect draw
+  $store _t5 drawRectangle
+  $ret rect
+}
+

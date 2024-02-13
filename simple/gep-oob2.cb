@@ -1,0 +1,7 @@
+fn main() -> int {
+  let x: &int, i: int;
+  i = 5;
+  x = new int i;
+  x[-i] = 4;
+  return x[-i];
+}

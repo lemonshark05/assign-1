@@ -1,0 +1,45 @@
+struct foo {
+  f1:int
+  f2:int
+}
+
+fun:&(int, &int, &foo, &int) -> &int
+
+fn fun(a:int, b:&int, c:&foo, d:&int) -> &int {
+let _t1:int, _t2:int, _t3:&int, _t4:int, _t5:int, _t6:&int, _t7:int, _t8:int
+entry:
+  _t1 = $load b
+  _t2 = $arith add a _t1
+  a = $copy _t2
+  _t3 = $gfp c f1
+  _t4 = $load _t3
+  _t5 = $arith mul a _t4
+  a = $copy _t5
+  _t6 = $gfp c f2
+  _t7 = $load _t6
+  _t8 = $arith div a _t7
+  a = $copy _t8
+  $store d a
+  $ret d
+}
+
+fn main() -> int {
+let _t1:&int, _t2:&int, _t3:&int, _t4:int, f:&foo, p:&int, q:&int, x:int
+bb1:
+  _t4 = $load _t3
+  $ret _t4
+
+entry:
+  x = $copy 1
+  p = $alloc 1 [_alloc1]
+  q = $alloc x [_alloc2]
+  f = $alloc 1 [_alloc3]
+  $store p 4
+  _t1 = $gfp f f1
+  $store _t1 5
+  _t2 = $gfp f f2
+  $store _t2 6
+  $store q 5
+  _t3 = $call_dir fun(x, p, f, q) then bb1
+}
+

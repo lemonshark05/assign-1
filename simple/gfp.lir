@@ -1,0 +1,21 @@
+struct foo {
+  f1:int
+  f2:int
+}
+
+fn main() -> int {
+let _t1:&int, _t2:&int, _t3:&int, _t4:int, _t5:&int, _t6:int, _t7:int, p:&foo
+entry:
+  p = $alloc 1 [_alloc1]
+  _t1 = $gfp p f1
+  $store _t1 3
+  _t2 = $gfp p f2
+  $store _t2 10
+  _t3 = $gfp p f2
+  _t4 = $load _t3
+  _t5 = $gfp p f1
+  _t6 = $load _t5
+  _t7 = $arith sub _t4 _t6
+  $ret _t7
+}
+

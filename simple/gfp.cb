@@ -1,0 +1,13 @@
+struct foo {
+  f1: int,
+  f2: int
+}
+
+fn main() -> int {
+  let p: &foo;
+  p = new foo;
+  p.f1 = 3;
+  p.f2 = 10;
+
+  return p.f2 - p.f1;
+}

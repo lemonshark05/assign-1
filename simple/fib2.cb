@@ -1,0 +1,13 @@
+extern print: (int) -> _;
+
+fn fib(n: int) -> int {
+  print(n);
+  if n <= 2 {
+    return 1;
+  }
+  return fib(n - 1) + fib(n - 2);
+}
+
+fn main() -> int {
+  return fib(6);
+}

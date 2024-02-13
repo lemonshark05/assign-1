@@ -1,0 +1,26 @@
+foo:&() -> _
+
+fn foo() -> _ {
+entry:
+  $ret 
+}
+
+fn main() -> int {
+let _t1:int, _t10:int, _t11:int, _t2:int, _t3:int, _t4:int, _t5:int, _t6:int, _t7:int, _t8:int, _t9:int, p:&() -> _, q:&() -> _, r:&int, x:int
+entry:
+  p = $copy foo
+  r = $alloc 1 [_alloc1]
+  _t1 = $arith sub 0 2
+  _t2 = $cmp gt x _t1
+  _t3 = $cmp eq p q
+  _t4 = $cmp neq p q
+  _t5 = $cmp eq r 0
+  _t6 = $arith mul 2 _t5
+  _t7 = $arith add _t4 _t6
+  _t8 = $arith mul 2 _t7
+  _t9 = $arith add _t3 _t8
+  _t10 = $arith mul 2 _t9
+  _t11 = $arith add _t2 _t10
+  $ret _t11
+}
+

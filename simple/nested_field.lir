@@ -1,0 +1,49 @@
+struct foo {
+  f1:int
+  f2:&foo
+}
+
+fn main() -> int {
+let _t1:&int, _t10:&&foo, _t11:&foo, _t12:&int, _t13:&int, _t14:&int, _t15:&int, _t16:int, _t17:&&foo, _t18:&foo, _t19:&int, _t2:&&foo, _t20:int, _t21:int, _t22:int, _t23:&&foo, _t24:&foo, _t25:&&foo, _t26:&foo, _t27:&int, _t28:int, _t29:int, _t3:&foo, _t30:int, _t4:&&foo, _t5:&foo, _t6:&&foo, _t7:&foo, _t8:&&foo, _t9:&foo, x:&foo, y:&foo
+entry:
+  x = $alloc 1 [_alloc1]
+  _t1 = $gfp x f1
+  $store _t1 7
+  _t2 = $gfp x f2
+  _t3 = $alloc 1 [_alloc2]
+  $store _t2 _t3
+  _t4 = $gfp x f2
+  _t5 = $load _t4
+  _t6 = $gfp _t5 f2
+  _t7 = $alloc 1 [_alloc3]
+  $store _t6 _t7
+  _t8 = $gfp x f2
+  _t9 = $load _t8
+  y = $copy _t9
+  _t10 = $gfp y f2
+  _t11 = $load _t10
+  _t12 = $gfp _t11 f1
+  $store _t12 2
+  _t13 = $gfp y f1
+  $store _t13 5
+  _t14 = $gfp x f1
+  $store _t14 3
+  _t15 = $gfp x f1
+  _t16 = $load _t15
+  _t17 = $gfp x f2
+  _t18 = $load _t17
+  _t19 = $gfp _t18 f1
+  _t20 = $load _t19
+  _t21 = $arith mul _t20 6
+  _t22 = $arith add _t16 _t21
+  _t23 = $gfp x f2
+  _t24 = $load _t23
+  _t25 = $gfp _t24 f2
+  _t26 = $load _t25
+  _t27 = $gfp _t26 f1
+  _t28 = $load _t27
+  _t29 = $arith mul _t28 36
+  _t30 = $arith add _t22 _t29
+  $ret _t30
+}
+

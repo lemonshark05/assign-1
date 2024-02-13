@@ -1,0 +1,13 @@
+fn main() -> int {
+let _t1:int, x:int, y:&int, z:int
+entry:
+  x = $copy 3
+  z = $copy 5
+  y = $alloc 1 [_alloc1]
+  $store y x
+  x = $copy 7
+  _t1 = $load y
+  z = $copy _t1
+  $ret z
+}
+

@@ -1,0 +1,19 @@
+fn main() -> int {
+let _t1:int, x:int
+bb1:
+  _t1 = $arith sub x 3
+  $branch _t1 bb2 bb3
+
+bb2:
+  x = $copy 3
+  $jump bb1
+
+bb3:
+  x = $copy 5
+  $ret x
+
+entry:
+  x = $copy 2
+  $jump bb1
+}
+

@@ -1,0 +1,12 @@
+bb1:
+_t1 -> Top
+_t2 -> Top
+
+bb2:
+_t1 -> Top
+_t2 -> Top
+_t3 -> Top
+
+entry:
+_t1 -> Top
+

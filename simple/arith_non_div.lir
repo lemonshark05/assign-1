@@ -1,0 +1,12 @@
+fn main() -> int {
+let _t1:int, _t2:int, _t3:int, x:int, y:int
+entry:
+  _t1 = $arith add 1 2
+  x = $copy _t1
+  _t2 = $arith mul x 2
+  y = $copy _t2
+  _t3 = $arith sub x y
+  x = $copy _t3
+  $ret x
+}
+

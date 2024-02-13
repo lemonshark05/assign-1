@@ -1,0 +1,8 @@
+// expected: 23
+
+fn foo(x:int, y: int) -> int { return x - y; }
+fn bar(x:int, y: int) -> int { return x * y; }
+
+fn main() -> int {
+  return foo(10, 7) + bar(5, 4);
+}

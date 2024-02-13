@@ -1,0 +1,7 @@
+fn main() -> int {
+  let x: int, y: int;
+  x = 1 + 2;
+  y = x * 2;
+  x = x - y;
+  return x;
+}

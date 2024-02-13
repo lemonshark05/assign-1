@@ -1,0 +1,65 @@
+bb1:
+_t1 -> [-7, PosInf)
+_t2 -> [0, 1]
+_t3 -> [4, PosInf)
+_t4 -> (NegInf, 9]
+_t5 -> [5, PosInf)
+_t6 -> (NegInf, 15]
+x -> [2, PosInf)
+y -> (NegInf, 15]
+
+bb2:
+_t1 -> [-7, PosInf)
+_t2 -> [0, 1]
+_t3 -> [4, PosInf)
+_t4 -> (NegInf, 9]
+_t5 -> [5, PosInf)
+_t6 -> (NegInf, 15]
+x -> [3, 3]
+y -> [10, 10]
+
+bb3:
+_t1 -> [-7, PosInf)
+_t2 -> [0, 1]
+_t3 -> [4, PosInf)
+_t4 -> (NegInf, 9]
+_t5 -> [5, PosInf)
+_t6 -> (NegInf, 15]
+_t7 -> [3, PosInf)
+_t8 -> (NegInf, PosInf)
+x -> [3, PosInf)
+y -> (NegInf, 15]
+
+bb4:
+_t1 -> [-7, PosInf)
+_t2 -> [0, 1]
+_t3 -> [4, PosInf)
+_t4 -> (NegInf, 9]
+_t5 -> [5, PosInf)
+_t6 -> (NegInf, 15]
+x -> [3, PosInf)
+y -> (NegInf, 10]
+
+bb5:
+_t1 -> [-7, PosInf)
+_t2 -> [0, 1]
+_t3 -> [4, PosInf)
+_t4 -> (NegInf, 9]
+_t5 -> [5, PosInf)
+_t6 -> (NegInf, 15]
+x -> [4, PosInf)
+y -> (NegInf, 9]
+
+bb6:
+_t1 -> [-7, PosInf)
+_t2 -> [0, 1]
+_t3 -> [4, PosInf)
+_t4 -> (NegInf, 9]
+_t5 -> [5, PosInf)
+_t6 -> (NegInf, 15]
+x -> [5, PosInf)
+y -> (NegInf, 15]
+
+entry:
+x -> [2, 2]
+

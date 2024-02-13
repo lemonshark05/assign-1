@@ -1,0 +1,7 @@
+fn square(x: int) -> int{
+  return x * x;
+}
+
+fn main() -> int {
+  return square(3) + square(4);
+}

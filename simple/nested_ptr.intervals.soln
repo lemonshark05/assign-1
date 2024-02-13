@@ -1,0 +1,9 @@
+entry:
+_t10 -> (NegInf, PosInf)
+_t12 -> (NegInf, PosInf)
+_t3 -> [0, 1]
+_t5 -> (NegInf, PosInf)
+_t6 -> (NegInf, PosInf)
+_t9 -> (NegInf, PosInf)
+y -> (NegInf, PosInf)
+

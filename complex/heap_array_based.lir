@@ -1,0 +1,549 @@
+struct heap {
+  arr:&&node
+  capacity:int
+  size:int
+}
+
+struct node {
+  rank:int
+  value:int
+}
+
+K:int
+emptyHeap:&() -> &heap
+exp2:&(int) -> int
+findMin:&(&heap) -> &node
+grow:&(&heap) -> _
+insert:&(&heap, &node) -> _
+left:&(int) -> int
+log2:&(int) -> int
+mod:&(int, int) -> int
+parent:&(int) -> int
+percolateDown:&(&heap, int) -> _
+percolateUp:&(&heap, int) -> _
+popMin:&(&heap) -> &node
+right:&(int) -> int
+swap:&(&heap, int, int) -> _
+
+extern print:(int) -> _
+
+fn emptyHeap() -> &heap {
+let _t1:&&&node, _t2:&&node, _t3:&int, h:&heap
+entry:
+  h = $alloc 1 [_alloc1]
+  _t1 = $gfp h arr
+  _t2 = $alloc 1 [_alloc2]
+  $store _t1 _t2
+  _t3 = $gfp h capacity
+  $store _t3 1
+  $ret h
+}
+
+fn exp2(l:int) -> int {
+let _t1:int, _t2:int, _t3:int, n:int
+bb1:
+  _t1 = $cmp gt l 0
+  $branch _t1 bb2 bb3
+
+bb2:
+  _t2 = $arith sub l 1
+  l = $copy _t2
+  _t3 = $arith mul n 2
+  n = $copy _t3
+  $jump bb1
+
+bb3:
+  $ret n
+
+entry:
+  n = $copy 1
+  $jump bb1
+}
+
+fn findMin(h:&heap) -> &node {
+let _t1:&&&node, _t2:&&node, _t3:&&node, _t4:&node
+entry:
+  _t1 = $gfp h arr
+  _t2 = $load _t1
+  _t3 = $gep _t2 0
+  _t4 = $load _t3
+  $ret _t4
+}
+
+fn grow(h:&heap) -> _ {
+let _t1:&int, _t10:&int, _t11:int, _t12:&int, _t13:int, _t14:int, _t15:&&node, _t16:&&&node, _t17:&&node, _t18:&&node, _t19:&node, _t2:int, _t20:int, _t21:&&&node, _t3:&int, _t4:int, _t5:int, _t6:&int, _t7:&int, _t8:int, _t9:int, i:int, t:&&node
+bb1:
+  $ret 
+
+bb2:
+  _t6 = $gfp h capacity
+  _t7 = $gfp h capacity
+  _t8 = $load _t7
+  _t9 = $arith mul _t8 2
+  $store _t6 _t9
+  _t10 = $gfp h capacity
+  _t11 = $load _t10
+  t = $alloc _t11 [_alloc3]
+  $jump bb3
+
+bb3:
+  _t12 = $gfp h size
+  _t13 = $load _t12
+  _t14 = $cmp lt i _t13
+  $branch _t14 bb4 bb5
+
+bb4:
+  _t15 = $gep t i
+  _t16 = $gfp h arr
+  _t17 = $load _t16
+  _t18 = $gep _t17 i
+  _t19 = $load _t18
+  $store _t15 _t19
+  _t20 = $arith add i 1
+  i = $copy _t20
+  $jump bb3
+
+bb5:
+  _t21 = $gfp h arr
+  $store _t21 t
+  $jump bb1
+
+entry:
+  _t1 = $gfp h size
+  _t2 = $load _t1
+  _t3 = $gfp h capacity
+  _t4 = $load _t3
+  _t5 = $cmp eq _t2 _t4
+  $branch _t5 bb2 bb1
+}
+
+fn insert(h:&heap, x:&node) -> _ {
+let _t1:&&&node, _t10:&int, _t11:int, _t12:int, _t2:&&node, _t3:&&node, _t4:&int, _t5:int, _t6:&int, _t7:&int, _t8:int, _t9:int
+bb1:
+  _t1 = $gfp h arr
+  _t2 = $load _t1
+  _t4 = $gfp h size
+  _t5 = $load _t4
+  _t3 = $gep _t2 _t5
+  $store _t3 x
+  _t6 = $gfp h size
+  _t7 = $gfp h size
+  _t8 = $load _t7
+  _t9 = $arith add _t8 1
+  $store _t6 _t9
+  _t10 = $gfp h size
+  _t11 = $load _t10
+  _t12 = $arith sub _t11 1
+  $call_dir percolateUp(h, _t12) then bb2
+
+bb2:
+  $ret 
+
+entry:
+  $call_dir grow(h) then bb1
+}
+
+fn left(n:int) -> int {
+let _t1:int, _t2:int
+entry:
+  _t1 = $arith mul 2 n
+  _t2 = $arith add _t1 1
+  $ret _t2
+}
+
+fn log2(n:int) -> int {
+let _t1:int, _t2:int, _t3:int, l:int
+bb1:
+  _t1 = $cmp gt n 1
+  $branch _t1 bb2 bb3
+
+bb2:
+  _t2 = $arith add l 1
+  l = $copy _t2
+  _t3 = $arith div n 2
+  n = $copy _t3
+  $jump bb1
+
+bb3:
+  $ret l
+
+entry:
+  l = $copy 0
+  $jump bb1
+}
+
+fn main() -> int {
+let _t1:&heap, _t10:int, _t11:int, _t12:&node, _t13:&int, _t14:int, _t2:int, _t3:int, _t4:&int, _t5:&int, _t6:int, _t7:int, _t8:int, _t9:&int, h:&heap, i:int, n:&node
+bb1:
+  h = $copy _t1
+  K = $copy 107
+  $jump bb2
+
+bb10:
+  n = $copy _t12
+  _t13 = $gfp n value
+  _t14 = $load _t13
+  $call_ext print(_t14)
+  $jump bb7
+
+bb2:
+  _t2 = $arith div K 2
+  _t3 = $cmp lt i _t2
+  $branch _t3 bb3 bb4
+
+bb3:
+  n = $alloc 1 [_alloc4]
+  _t4 = $gfp n value
+  $store _t4 i
+  _t5 = $gfp n rank
+  _t6 = $arith mul i i
+  _t7 = $call_dir mod(_t6, K) then bb5
+
+bb4:
+  $jump bb7
+
+bb5:
+  $store _t5 _t7
+  $call_dir insert(h, n) then bb6
+
+bb6:
+  _t8 = $arith add i 1
+  i = $copy _t8
+  $jump bb2
+
+bb7:
+  _t9 = $gfp h size
+  _t10 = $load _t9
+  _t11 = $cmp gt _t10 0
+  $branch _t11 bb8 bb9
+
+bb8:
+  _t12 = $call_dir popMin(h) then bb10
+
+bb9:
+  $ret 0
+
+entry:
+  i = $copy 0
+  _t1 = $call_dir emptyHeap() then bb1
+}
+
+fn mod(a:int, b:int) -> int {
+let _t1:int, _t2:int, _t3:int
+entry:
+  _t1 = $arith div a b
+  _t2 = $arith mul _t1 b
+  _t3 = $arith sub a _t2
+  $ret _t3
+}
+
+fn parent(n:int) -> int {
+let _t1:int, _t2:int
+entry:
+  _t1 = $arith sub n 1
+  _t2 = $arith div _t1 2
+  $ret _t2
+}
+
+fn percolateDown(h:&heap, i:int) -> _ {
+let _lo1:int, _t10:&&&node, _t11:&&node, _t12:&&node, _t13:&node, _t14:&int, _t15:int, _t16:&&&node, _t17:&&node, _t18:int, _t19:&&node, _t2:int, _t20:&node, _t21:&int, _t22:int, _t23:int, _t24:int, _t25:int, _t26:&&&node, _t27:&&node, _t28:&&node, _t29:&node, _t3:&int, _t30:&int, _t31:int, _t32:&&&node, _t33:&&node, _t34:int, _t35:&&node, _t36:&node, _t37:&int, _t38:int, _t39:&&&node, _t4:int, _t40:&&node, _t41:int, _t42:&&node, _t43:&node, _t44:&int, _t45:int, _t46:int, _t47:int, _t48:int, _t49:int, _t5:int, _t50:int, _t51:int, _t52:int, _t53:int, _t6:int, _t7:&int, _t8:int, _t9:int, current:int, l:int, r:int
+bb1:
+  _t3 = $gfp h size
+  _t4 = $load _t3
+  _t5 = $cmp gte _t2 _t4
+  $branch _t5 bb3 bb2
+
+bb10:
+  $call_dir swap(h, i, _t24) then bb11
+
+bb11:
+  _t25 = $call_dir left(i) then bb12
+
+bb12:
+  $call_dir percolateDown(h, _t25) then bb13
+
+bb13:
+  $jump bb8
+
+bb14:
+  _t35 = $gep _t33 _t34
+  _t36 = $load _t35
+  _t37 = $gfp _t36 rank
+  _t38 = $load _t37
+  l = $copy _t38
+  _t39 = $gfp h arr
+  _t40 = $load _t39
+  _t41 = $call_dir right(i) then bb15
+
+bb15:
+  _t42 = $gep _t40 _t41
+  _t43 = $load _t42
+  _t44 = $gfp _t43 rank
+  _t45 = $load _t44
+  r = $copy _t45
+  _t46 = $cmp lte current l
+  _lo1 = $copy _t46
+  _t47 = $cmp neq _lo1 0
+  $branch _t47 bb17 bb16
+
+bb16:
+  $branch _lo1 bb19 bb18
+
+bb17:
+  _t48 = $cmp lte current r
+  _lo1 = $copy _t48
+  $jump bb16
+
+bb18:
+  _t49 = $cmp lt l r
+  $branch _t49 bb21 bb22
+
+bb19:
+  $jump exit
+
+bb2:
+  _t6 = $call_dir right(i) then bb4
+
+bb20:
+  $jump exit
+
+bb21:
+  _t50 = $call_dir left(i) then bb23
+
+bb22:
+  _t52 = $call_dir right(i) then bb27
+
+bb23:
+  $call_dir swap(h, i, _t50) then bb24
+
+bb24:
+  _t51 = $call_dir left(i) then bb25
+
+bb25:
+  $call_dir percolateDown(h, _t51) then bb26
+
+bb26:
+  $jump bb20
+
+bb27:
+  $call_dir swap(h, i, _t52) then bb28
+
+bb28:
+  _t53 = $call_dir right(i) then bb29
+
+bb29:
+  $call_dir percolateDown(h, _t53) then bb30
+
+bb3:
+  $jump exit
+
+bb30:
+  $jump bb20
+
+bb4:
+  _t7 = $gfp h size
+  _t8 = $load _t7
+  _t9 = $cmp gte _t6 _t8
+  $branch _t9 bb6 bb5
+
+bb5:
+  _t26 = $gfp h arr
+  _t27 = $load _t26
+  _t28 = $gep _t27 i
+  _t29 = $load _t28
+  _t30 = $gfp _t29 rank
+  _t31 = $load _t30
+  current = $copy _t31
+  _t32 = $gfp h arr
+  _t33 = $load _t32
+  _t34 = $call_dir left(i) then bb14
+
+bb6:
+  _t10 = $gfp h arr
+  _t11 = $load _t10
+  _t12 = $gep _t11 i
+  _t13 = $load _t12
+  _t14 = $gfp _t13 rank
+  _t15 = $load _t14
+  _t16 = $gfp h arr
+  _t17 = $load _t16
+  _t18 = $call_dir left(i) then bb7
+
+bb7:
+  _t19 = $gep _t17 _t18
+  _t20 = $load _t19
+  _t21 = $gfp _t20 rank
+  _t22 = $load _t21
+  _t23 = $cmp gt _t15 _t22
+  $branch _t23 bb9 bb8
+
+bb8:
+  $jump exit
+
+bb9:
+  _t24 = $call_dir left(i) then bb10
+
+entry:
+  _t2 = $call_dir left(i) then bb1
+
+exit:
+  $ret 
+}
+
+fn percolateUp(h:&heap, i:int) -> _ {
+let _lo1:int, _t10:int, _t11:&&&node, _t12:&&node, _t13:&&node, _t14:&node, _t15:&int, _t16:int, _t17:int, _t18:int, _t19:int, _t2:int, _t20:int, _t21:int, _t22:&&&node, _t23:&&node, _t24:int, _t25:&&node, _t26:&node, _t27:&int, _t28:int, _t29:&&&node, _t3:int, _t30:&&node, _t31:&&node, _t32:&node, _t33:&int, _t34:int, _t35:int, _t4:&&&node, _t5:&&node, _t6:int, _t7:&&node, _t8:&node, _t9:&int
+bb1:
+  $jump bb4
+
+bb10:
+  $jump bb4
+
+bb11:
+  _t22 = $gfp h arr
+  _t23 = $load _t22
+  _t24 = $call_dir parent(i) then bb12
+
+bb12:
+  _t25 = $gep _t23 _t24
+  _t26 = $load _t25
+  _t27 = $gfp _t26 rank
+  _t28 = $load _t27
+  _t29 = $gfp h arr
+  _t30 = $load _t29
+  _t31 = $gep _t30 i
+  _t32 = $load _t31
+  _t33 = $gfp _t32 rank
+  _t34 = $load _t33
+  _t35 = $cmp gt _t28 _t34
+  _lo1 = $copy _t35
+  $jump bb10
+
+bb2:
+  _t4 = $gfp h arr
+  _t5 = $load _t4
+  _t6 = $call_dir parent(i) then bb3
+
+bb3:
+  _t7 = $gep _t5 _t6
+  _t8 = $load _t7
+  _t9 = $gfp _t8 rank
+  _t10 = $load _t9
+  _t11 = $gfp h arr
+  _t12 = $load _t11
+  _t13 = $gep _t12 i
+  _t14 = $load _t13
+  _t15 = $gfp _t14 rank
+  _t16 = $load _t15
+  _t17 = $cmp gt _t10 _t16
+  _lo1 = $copy _t17
+  $jump bb1
+
+bb4:
+  $branch _lo1 bb5 bb6
+
+bb5:
+  _t18 = $call_dir parent(i) then bb7
+
+bb6:
+  $ret 
+
+bb7:
+  $call_dir swap(h, i, _t18) then bb8
+
+bb8:
+  _t19 = $call_dir parent(i) then bb9
+
+bb9:
+  i = $copy _t19
+  _t20 = $cmp gt i 0
+  _lo1 = $copy _t20
+  _t21 = $cmp neq _lo1 0
+  $branch _t21 bb11 bb10
+
+entry:
+  _t2 = $cmp gt i 0
+  _lo1 = $copy _t2
+  _t3 = $cmp neq _lo1 0
+  $branch _t3 bb2 bb1
+}
+
+fn popMin(h:&heap) -> &node {
+let _ret26:&node, _t1:&&&node, _t10:&&node, _t11:&&node, _t12:&node, _t13:&int, _t14:&int, _t15:int, _t16:int, _t17:&&&node, _t18:&&node, _t19:&&node, _t2:&&node, _t20:&&&node, _t21:&&node, _t22:&int, _t23:int, _t24:&&node, _t25:&node, _t3:&&node, _t4:&node, _t5:&int, _t6:int, _t7:int, _t8:&int, _t9:&&&node, min:&node
+bb1:
+  _t13 = $gfp h size
+  _t14 = $gfp h size
+  _t15 = $load _t14
+  _t16 = $arith sub _t15 1
+  $store _t13 _t16
+  _t17 = $gfp h arr
+  _t18 = $load _t17
+  _t19 = $gep _t18 0
+  _t20 = $gfp h arr
+  _t21 = $load _t20
+  _t22 = $gfp h size
+  _t23 = $load _t22
+  _t24 = $gep _t21 _t23
+  _t25 = $load _t24
+  $store _t19 _t25
+  $call_dir percolateDown(h, 0) then bb3
+
+bb2:
+  _t8 = $gfp h size
+  $store _t8 0
+  _t9 = $gfp h arr
+  _t10 = $load _t9
+  _t11 = $gep _t10 0
+  _t12 = $load _t11
+  _ret26 = $copy _t12
+  $jump exit
+
+bb3:
+  _ret26 = $copy min
+  $jump exit
+
+entry:
+  _t1 = $gfp h arr
+  _t2 = $load _t1
+  _t3 = $gep _t2 0
+  _t4 = $load _t3
+  min = $copy _t4
+  _t5 = $gfp h size
+  _t6 = $load _t5
+  _t7 = $cmp eq _t6 1
+  $branch _t7 bb2 bb1
+
+exit:
+  $ret _ret26
+}
+
+fn right(n:int) -> int {
+let _t1:int, _t2:int
+entry:
+  _t1 = $arith mul 2 n
+  _t2 = $arith add _t1 2
+  $ret _t2
+}
+
+fn swap(h:&heap, i:int, j:int) -> _ {
+let _t1:&&&node, _t10:&&node, _t11:&node, _t12:&&&node, _t13:&&node, _t14:&&node, _t2:&&node, _t3:&&node, _t4:&node, _t5:&&&node, _t6:&&node, _t7:&&node, _t8:&&&node, _t9:&&node, t:&node
+entry:
+  _t1 = $gfp h arr
+  _t2 = $load _t1
+  _t3 = $gep _t2 i
+  _t4 = $load _t3
+  t = $copy _t4
+  _t5 = $gfp h arr
+  _t6 = $load _t5
+  _t7 = $gep _t6 i
+  _t8 = $gfp h arr
+  _t9 = $load _t8
+  _t10 = $gep _t9 j
+  _t11 = $load _t10
+  $store _t7 _t11
+  _t12 = $gfp h arr
+  _t13 = $load _t12
+  _t14 = $gep _t13 j
+  $store _t14 t
+  $ret 
+}
+

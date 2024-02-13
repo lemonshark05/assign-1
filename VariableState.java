@@ -4,9 +4,21 @@ class VariableState{
     boolean isTop = false;
     Integer constantValue = null;
     String pointsTo = null;
+    boolean isInt = false;
+
+    public boolean isInt() {
+        return isInt;
+    }
+
+    public void setInt(boolean b) {
+        isInt = b;
+    }
 
     void markAsTop() {
-        isTop = true;
+        if(this.pointsTo == null){
+            this.isTop = true;
+            this.constantValue = null;
+        }
     }
 
     public void setPointsTo(String pointsTo) {
@@ -15,8 +27,10 @@ class VariableState{
     }
 
     void setConstantValue(Integer value) {
-        this.constantValue = value;
-        isTop = false;
+        if (!isTop) {
+            // only update if not Top
+            this.constantValue = value;
+        }
     }
 
     public boolean isTop() {
@@ -27,18 +41,20 @@ class VariableState{
         return constantValue;
     }
 
+    public boolean hasConstantValue() {
+        return constantValue != null;
+    }
+
     public String getPointsTo() {
         return pointsTo;
     }
 
-    VariableState merge(VariableState other) {
-        // Placeholder for merging logic
-        return this;
+    public void merge(VariableState predecessorState) {
+        this.join(predecessorState);
     }
 
     @Override
     public VariableState clone() {
-        // Placeholder for clone method
         VariableState newState = new VariableState();
         newState.isTop = this.isTop;
         return newState;
@@ -48,26 +64,35 @@ class VariableState{
     public boolean equals(Object obj) {
         if (this == obj) return true;
         if (!(obj instanceof VariableState that)) return false;
-        return isTop == that.isTop; // Extend this logic based on all properties of VariableState
+        return isTop == that.isTop;
     }
 
     void weakUpdate(VariableState other) {
         if (this.isTop || other.isTop) {
-            this.isTop = true;
-        } else {
-            this.isTop = true;
+            this.markAsTop();
+        } else if (this.constantValue != null && other.constantValue != null && !Objects.equals(this.constantValue, other.constantValue)) {
+            this.markAsTop();
+        } else if (this.pointsTo != null && other.pointsTo != null && !Objects.equals(this.pointsTo, other.pointsTo)) {
+            this.markAsTop();
         }
     }
 
-    public boolean join(VariableState other) {
-        if (this.isTop || other.isTop || !Objects.equals(this.constantValue, other.constantValue)) {
-            if (!this.isTop) {
-                this.markAsTop();
-                return true;
-            }
-            return false;
+    public VariableState join(VariableState other) {
+        //should change after worklist
+        if (this.isTop || other.isTop) {
+            this.markAsTop();
+            return this;
         }
-        return false;
+
+        if (Objects.equals(this.constantValue, other.constantValue)) {
+            return this;
+        }
+
+        if (this.constantValue != null || other.constantValue != null) {
+            this.markAsTop();
+        }
+
+        return this;
     }
 }
 

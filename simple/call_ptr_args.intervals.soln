@@ -1,0 +1,7 @@
+bb1:
+_t4 -> (NegInf, PosInf)
+x -> [1, 1]
+
+entry:
+x -> [1, 1]
+

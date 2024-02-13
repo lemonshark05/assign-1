@@ -1,0 +1,101 @@
+bb1:
+K -> 107
+i -> 0
+
+bb10:
+K -> Top
+_t10 -> Top
+_t11 -> Top
+_t14 -> Top
+_t2 -> Top
+_t3 -> Top
+_t6 -> Top
+_t7 -> Top
+_t8 -> Top
+i -> Top
+
+bb2:
+K -> Top
+_t2 -> Top
+_t3 -> Top
+_t6 -> Top
+_t7 -> Top
+_t8 -> Top
+i -> Top
+
+bb3:
+K -> Top
+_t2 -> Top
+_t3 -> Top
+_t6 -> Top
+_t7 -> Top
+_t8 -> Top
+i -> Top
+
+bb4:
+K -> Top
+_t2 -> Top
+_t3 -> Top
+_t6 -> Top
+_t7 -> Top
+_t8 -> Top
+i -> Top
+
+bb5:
+K -> Top
+_t2 -> Top
+_t3 -> Top
+_t6 -> Top
+_t7 -> Top
+_t8 -> Top
+i -> Top
+
+bb6:
+K -> Top
+_t2 -> Top
+_t3 -> Top
+_t6 -> Top
+_t7 -> Top
+_t8 -> Top
+i -> Top
+
+bb7:
+K -> Top
+_t10 -> Top
+_t11 -> Top
+_t14 -> Top
+_t2 -> Top
+_t3 -> Top
+_t6 -> Top
+_t7 -> Top
+_t8 -> Top
+i -> Top
+
+bb8:
+K -> Top
+_t10 -> Top
+_t11 -> Top
+_t14 -> Top
+_t2 -> Top
+_t3 -> Top
+_t6 -> Top
+_t7 -> Top
+_t8 -> Top
+i -> Top
+
+bb9:
+K -> Top
+_t10 -> Top
+_t11 -> Top
+_t14 -> Top
+_t2 -> Top
+_t3 -> Top
+_t6 -> Top
+_t7 -> Top
+_t8 -> Top
+i -> Top
+
+entry:
+K -> Top
+i -> 0
+

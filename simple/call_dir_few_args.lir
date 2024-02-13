@@ -1,0 +1,30 @@
+bar:&(int, int) -> int
+foo:&(int, int) -> int
+
+fn bar(x:int, y:int) -> int {
+let _t1:int
+entry:
+  _t1 = $arith mul x y
+  $ret _t1
+}
+
+fn foo(x:int, y:int) -> int {
+let _t1:int
+entry:
+  _t1 = $arith sub x y
+  $ret _t1
+}
+
+fn main() -> int {
+let _t1:int, _t2:int, _t3:int
+bb1:
+  _t2 = $call_dir bar(5, 4) then bb2
+
+bb2:
+  _t3 = $arith add _t1 _t2
+  $ret _t3
+
+entry:
+  _t1 = $call_dir foo(10, 7) then bb1
+}
+

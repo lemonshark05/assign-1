@@ -1,0 +1,189 @@
+// binary heaps using arrays
+
+extern print: (int) -> _;
+
+struct node {
+    value: int,
+    rank: int
+}
+
+struct heap {
+    arr: &&node,
+    size: int,
+    capacity: int
+}
+
+fn left(n: int) -> int {
+  return 2 * n + 1;
+}
+
+fn right(n: int) -> int {
+  return 2 * n + 2;
+}
+
+fn parent(n: int) -> int {
+  return (n - 1) / 2;
+}
+
+// precondition: n > 0
+fn log2(n: int) -> int {
+    let l: int = 0;
+
+    while n > 1 {
+        l = l + 1;
+        n = n / 2;
+    }
+
+    return l;
+}
+
+// precondition: l >= 0
+fn exp2(l: int) -> int {
+    let n: int = 1;
+
+    while l > 0 {
+        l = l - 1;
+        n = n * 2;
+    }
+
+    return n;
+}
+
+fn mod(a: int, b: int) -> int {
+    return a - (a / b) * b;
+}
+
+fn emptyHeap() -> &heap {
+    let h: &heap;
+    h = new heap;
+    h.arr = new &node;
+    h.capacity = 1;
+    return h;
+}
+
+fn grow(h: &heap) -> _ {
+    let t: &&node, i: int;
+
+    if h.size == h.capacity {
+        h.capacity = h.capacity * 2;
+
+        t = new &node h.capacity;
+        
+        while i < h.size {
+            t[i] = h.arr[i];
+            i = i + 1;
+        }
+
+        h.arr = t;
+    }
+
+    return;
+}
+
+fn insert(h: &heap, x: &node) -> _ {
+    grow(h);
+
+    h.arr[h.size] = x;
+    h.size = h.size + 1;
+    
+    percolateUp(h, h.size - 1);
+    
+    return;
+}
+
+fn swap(h: &heap, i: int, j: int) -> _ {
+    let t: &node;
+
+    t = h.arr[i];
+    h.arr[i] = h.arr[j];
+    h.arr[j] = t;
+
+    return;
+}
+
+fn percolateUp(h: &heap, i: int) -> _ {
+    while i > 0 and h.arr[parent(i)].rank > h.arr[i].rank {
+        swap(h, i, parent(i));
+        i = parent(i);
+    }
+
+    return;
+}
+
+fn percolateDown(h: &heap, i: int) -> _ {
+    let current: int, l: int, r: int;
+    
+    if left(i) >= h.size {
+        return;
+    }
+
+    if right(i) >= h.size {
+        if h.arr[i].rank > h.arr[left(i)].rank {
+            swap(h, i, left(i));
+            percolateDown(h, left(i));
+        } else {
+        }
+        return;
+    }
+
+    current = h.arr[i].rank;
+    l = h.arr[left(i)].rank;
+    r = h.arr[right(i)].rank;
+
+    // check if we're already done
+    if current <= l and current <= r {
+        return;
+    }
+
+    if l < r {
+        swap(h, i, left(i));
+        percolateDown(h, left(i));
+    } else {
+        swap(h, i, right(i));
+        percolateDown(h, right(i));
+    }
+
+    return;
+}
+
+fn findMin(h: &heap) -> &node {
+    return h.arr[0];
+}
+
+fn popMin(h: &heap) -> &node {
+    let min: &node = h.arr[0];
+
+    if h.size == 1 {
+        h.size = 0;
+        return h.arr[0];
+    }
+
+    h.size = h.size - 1;
+    h.arr[0] = h.arr[h.size];
+
+    percolateDown(h, 0);
+
+    return min;
+}
+
+let K: int;
+
+fn main() -> int {
+    let i: int = 0, h: &heap = emptyHeap(), n: &node;
+    K = 107;
+
+    while i < K / 2 {
+        n = new node;
+        n.value = i;
+        n.rank = mod(i * i, K);
+        insert(h, n);
+        i = i + 1;
+    }
+
+    while h.size > 0 {
+        n = popMin(h);
+        print(n.value);
+    }
+
+    return 0;
+}

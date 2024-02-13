@@ -1,0 +1,578 @@
+struct heap {
+  root:&node
+  size:int
+}
+
+struct node {
+  left:&node
+  parent:&node
+  right:&node
+  value:int
+}
+
+K:int
+emptyHeap:&() -> &heap
+exp2:&(int) -> int
+findMin:&(&heap) -> int
+getBit:&(int, int) -> int
+insert:&(&heap, int) -> _
+log2:&(int) -> int
+mod:&(int, int) -> int
+percolateDown:&(&node) -> _
+percolateUp:&(&node) -> _
+popMin:&(&heap) -> int
+
+extern print:(int) -> _
+
+fn emptyHeap() -> &heap {
+let h:&heap
+entry:
+  h = $alloc 1 [_alloc1]
+  $ret h
+}
+
+fn exp2(l:int) -> int {
+let _t1:int, _t2:int, _t3:int, n:int
+bb1:
+  _t1 = $cmp gt l 0
+  $branch _t1 bb2 bb3
+
+bb2:
+  _t2 = $arith sub l 1
+  l = $copy _t2
+  _t3 = $arith mul n 2
+  n = $copy _t3
+  $jump bb1
+
+bb3:
+  $ret n
+
+entry:
+  n = $copy 1
+  $jump bb1
+}
+
+fn findMin(h:&heap) -> int {
+let _t1:&&node, _t2:&node, _t3:&int, _t4:int
+entry:
+  _t1 = $gfp h root
+  _t2 = $load _t1
+  _t3 = $gfp _t2 value
+  _t4 = $load _t3
+  $ret _t4
+}
+
+fn getBit(n:int, bit:int) -> int {
+let _t1:int, _t2:int, _t3:int, _t4:int, _t5:int, _t6:int, _t7:int
+bb1:
+  _t1 = $cmp gt bit 1
+  $branch _t1 bb2 bb3
+
+bb2:
+  _t2 = $arith div n 2
+  n = $copy _t2
+  _t3 = $arith sub bit 1
+  bit = $copy _t3
+  $jump bb1
+
+bb3:
+  _t4 = $arith div n 2
+  _t5 = $arith mul _t4 2
+  _t6 = $arith sub n _t5
+  _t7 = $cmp neq _t6 0
+  $ret _t7
+
+entry:
+  $jump bb1
+}
+
+fn insert(h:&heap, x:int) -> _ {
+let _t1:&&node, _t10:&int, _t11:int, _t12:int, _t13:int, _t14:int, _t15:int, _t16:&&node, _t17:&node, _t18:int, _t19:int, _t2:&node, _t20:&&node, _t21:&node, _t22:&&node, _t23:&node, _t24:int, _t25:int, _t26:int, _t27:&&node, _t28:&node, _t29:&&node, _t3:int, _t30:&node, _t31:&&node, _t32:&node, _t33:&&node, _t34:&node, _t35:&&node, _t36:&int, _t37:&int, _t38:&int, _t39:int, _t4:&&node, _t40:int, _t5:&node, _t6:&&node, _t7:&node, _t8:&int, _t9:&int, bits:int, depth:int, next:int, node:&node, parent:&node
+bb1:
+  _t10 = $gfp h size
+  _t11 = $load _t10
+  _t12 = $arith add _t11 1
+  next = $copy _t12
+  _t13 = $call_dir log2(next) then bb3
+
+bb10:
+  _t20 = $gfp parent right
+  _t21 = $load _t20
+  parent = $copy _t21
+  $jump bb9
+
+bb11:
+  _t22 = $gfp parent left
+  _t23 = $load _t22
+  parent = $copy _t23
+  $jump bb9
+
+bb12:
+  _t26 = $cmp eq _t25 0
+  $branch _t26 bb14 bb15
+
+bb13:
+  _t35 = $gfp node parent
+  $store _t35 parent
+  _t36 = $gfp node value
+  $store _t36 x
+  $call_dir percolateUp(node) then bb16
+
+bb14:
+  _t27 = $gfp parent left
+  _t28 = $alloc 1 [_alloc3]
+  $store _t27 _t28
+  _t29 = $gfp parent left
+  _t30 = $load _t29
+  node = $copy _t30
+  $jump bb13
+
+bb15:
+  _t31 = $gfp parent right
+  _t32 = $alloc 1 [_alloc4]
+  $store _t31 _t32
+  _t33 = $gfp parent right
+  _t34 = $load _t33
+  node = $copy _t34
+  $jump bb13
+
+bb16:
+  _t37 = $gfp h size
+  _t38 = $gfp h size
+  _t39 = $load _t38
+  _t40 = $arith add _t39 1
+  $store _t37 _t40
+  $jump exit
+
+bb2:
+  _t4 = $gfp h root
+  _t5 = $alloc 1 [_alloc2]
+  $store _t4 _t5
+  _t6 = $gfp h root
+  _t7 = $load _t6
+  _t8 = $gfp _t7 value
+  $store _t8 x
+  _t9 = $gfp h size
+  $store _t9 1
+  $jump exit
+
+bb3:
+  depth = $copy _t13
+  _t14 = $call_dir exp2(depth) then bb4
+
+bb4:
+  _t15 = $arith sub next _t14
+  bits = $copy _t15
+  _t16 = $gfp h root
+  _t17 = $load _t16
+  parent = $copy _t17
+  $jump bb5
+
+bb5:
+  _t18 = $cmp gt depth 1
+  $branch _t18 bb6 bb7
+
+bb6:
+  _t19 = $call_dir getBit(bits, depth) then bb8
+
+bb7:
+  _t25 = $call_dir getBit(bits, depth) then bb12
+
+bb8:
+  $branch _t19 bb10 bb11
+
+bb9:
+  _t24 = $arith sub depth 1
+  depth = $copy _t24
+  $jump bb5
+
+entry:
+  _t1 = $gfp h root
+  _t2 = $load _t1
+  _t3 = $cmp eq _t2 0
+  $branch _t3 bb2 bb1
+
+exit:
+  $ret 
+}
+
+fn log2(n:int) -> int {
+let _t1:int, _t2:int, _t3:int, l:int
+bb1:
+  _t1 = $cmp gt n 1
+  $branch _t1 bb2 bb3
+
+bb2:
+  _t2 = $arith add l 1
+  l = $copy _t2
+  _t3 = $arith div n 2
+  n = $copy _t3
+  $jump bb1
+
+bb3:
+  $ret l
+
+entry:
+  l = $copy 0
+  $jump bb1
+}
+
+fn main() -> int {
+let _t1:&heap, _t10:int, _t2:int, _t3:int, _t4:int, _t5:int, _t6:int, _t7:&int, _t8:int, _t9:int, h:&heap, i:int
+bb1:
+  h = $copy _t1
+  K = $copy 107
+  $jump bb2
+
+bb10:
+  $call_ext print(_t10)
+  $jump bb7
+
+bb2:
+  _t2 = $arith div K 2
+  _t3 = $cmp lt i _t2
+  $branch _t3 bb3 bb4
+
+bb3:
+  _t4 = $arith mul i i
+  _t5 = $call_dir mod(_t4, K) then bb5
+
+bb4:
+  $jump bb7
+
+bb5:
+  $call_dir insert(h, _t5) then bb6
+
+bb6:
+  _t6 = $arith add i 1
+  i = $copy _t6
+  $jump bb2
+
+bb7:
+  _t7 = $gfp h size
+  _t8 = $load _t7
+  _t9 = $cmp gt _t8 0
+  $branch _t9 bb8 bb9
+
+bb8:
+  _t10 = $call_dir popMin(h) then bb10
+
+bb9:
+  $ret 0
+
+entry:
+  i = $copy 0
+  _t1 = $call_dir emptyHeap() then bb1
+}
+
+fn mod(a:int, b:int) -> int {
+let _t1:int, _t2:int, _t3:int
+entry:
+  _t1 = $arith div a b
+  _t2 = $arith mul _t1 b
+  _t3 = $arith sub a _t2
+  $ret _t3
+}
+
+fn percolateDown(current:&node) -> _ {
+let _lo1:int, _t10:&int, _t11:int, _t12:&&node, _t13:&node, _t14:&int, _t15:int, _t16:int, _t17:&int, _t18:int, _t19:&int, _t2:&&node, _t20:&&node, _t21:&node, _t22:&int, _t23:int, _t24:&&node, _t25:&node, _t26:&int, _t27:&int, _t28:int, _t29:&&node, _t3:&node, _t30:&node, _t31:&int, _t32:int, _t33:int, _t34:int, _t35:&int, _t36:int, _t37:&&node, _t38:&node, _t39:&int, _t4:&&node, _t40:int, _t41:int, _t42:&&node, _t43:&node, _t44:&int, _t45:int, _t46:&&node, _t47:&node, _t48:&int, _t49:int, _t5:&node, _t50:int, _t51:&int, _t52:int, _t53:&int, _t54:&&node, _t55:&node, _t56:&int, _t57:int, _t58:&&node, _t59:&node, _t6:int, _t60:&int, _t61:&&node, _t62:&node, _t63:&int, _t64:int, _t65:&int, _t66:&&node, _t67:&node, _t68:&int, _t69:int, _t7:&&node, _t70:&&node, _t71:&node, _t72:&int, _t73:&&node, _t74:&node, _t8:&node, _t9:int, parent:&node, tmp:int, tmpN:&node
+bb1:
+  _t7 = $gfp current right
+  _t8 = $load _t7
+  _t9 = $cmp eq _t8 0
+  $branch _t9 bb4 bb3
+
+bb10:
+  _t42 = $gfp current left
+  _t43 = $load _t42
+  _t44 = $gfp _t43 value
+  _t45 = $load _t44
+  _t46 = $gfp current right
+  _t47 = $load _t46
+  _t48 = $gfp _t47 value
+  _t49 = $load _t48
+  _t50 = $cmp lt _t45 _t49
+  $branch _t50 bb13 bb14
+
+bb11:
+  $jump exit
+
+bb12:
+  $jump exit
+
+bb13:
+  _t51 = $gfp current value
+  _t52 = $load _t51
+  tmp = $copy _t52
+  _t53 = $gfp current value
+  _t54 = $gfp current left
+  _t55 = $load _t54
+  _t56 = $gfp _t55 value
+  _t57 = $load _t56
+  $store _t53 _t57
+  _t58 = $gfp current left
+  _t59 = $load _t58
+  _t60 = $gfp _t59 value
+  $store _t60 tmp
+  _t61 = $gfp current left
+  _t62 = $load _t61
+  $call_dir percolateDown(_t62) then bb15
+
+bb14:
+  _t63 = $gfp current value
+  _t64 = $load _t63
+  tmp = $copy _t64
+  _t65 = $gfp current value
+  _t66 = $gfp current right
+  _t67 = $load _t66
+  _t68 = $gfp _t67 value
+  _t69 = $load _t68
+  $store _t65 _t69
+  _t70 = $gfp current right
+  _t71 = $load _t70
+  _t72 = $gfp _t71 value
+  $store _t72 tmp
+  _t73 = $gfp current right
+  _t74 = $load _t73
+  $call_dir percolateDown(_t74) then bb16
+
+bb15:
+  $jump bb12
+
+bb16:
+  $jump bb12
+
+bb2:
+  $jump exit
+
+bb3:
+  _t27 = $gfp current value
+  _t28 = $load _t27
+  _t29 = $gfp current left
+  _t30 = $load _t29
+  _t31 = $gfp _t30 value
+  _t32 = $load _t31
+  _t33 = $cmp lte _t28 _t32
+  _lo1 = $copy _t33
+  _t34 = $cmp neq _lo1 0
+  $branch _t34 bb9 bb8
+
+bb4:
+  _t10 = $gfp current value
+  _t11 = $load _t10
+  _t12 = $gfp current left
+  _t13 = $load _t12
+  _t14 = $gfp _t13 value
+  _t15 = $load _t14
+  _t16 = $cmp gt _t11 _t15
+  $branch _t16 bb6 bb5
+
+bb5:
+  $jump exit
+
+bb6:
+  _t17 = $gfp current value
+  _t18 = $load _t17
+  tmp = $copy _t18
+  _t19 = $gfp current value
+  _t20 = $gfp current left
+  _t21 = $load _t20
+  _t22 = $gfp _t21 value
+  _t23 = $load _t22
+  $store _t19 _t23
+  _t24 = $gfp current left
+  _t25 = $load _t24
+  _t26 = $gfp _t25 value
+  $store _t26 tmp
+  $call_dir percolateDown(current) then bb7
+
+bb7:
+  $jump bb5
+
+bb8:
+  $branch _lo1 bb11 bb10
+
+bb9:
+  _t35 = $gfp current value
+  _t36 = $load _t35
+  _t37 = $gfp current right
+  _t38 = $load _t37
+  _t39 = $gfp _t38 value
+  _t40 = $load _t39
+  _t41 = $cmp lte _t36 _t40
+  _lo1 = $copy _t41
+  $jump bb8
+
+entry:
+  _t2 = $gfp current parent
+  _t3 = $load _t2
+  parent = $copy _t3
+  _t4 = $gfp current left
+  _t5 = $load _t4
+  _t6 = $cmp eq _t5 0
+  $branch _t6 bb2 bb1
+
+exit:
+  $ret 
+}
+
+fn percolateUp(current:&node) -> _ {
+let _t1:&&node, _t10:&int, _t11:int, _t12:&int, _t13:int, _t14:int, _t15:int, _t16:&int, _t17:int, _t18:&int, _t19:&&node, _t2:&node, _t20:&node, _t21:&int, _t22:int, _t23:&&node, _t24:&node, _t25:&int, _t26:&&node, _t27:&node, _t3:int, _t4:&&node, _t5:&node, _t6:int, _t7:int, _t8:&&node, _t9:&node, parent:&node, tmp:int
+bb1:
+  _t3 = $cmp neq current 0
+  _t4 = $gfp current parent
+  _t5 = $load _t4
+  _t6 = $cmp neq _t5 0
+  _t7 = $arith mul _t3 _t6
+  _t8 = $gfp current parent
+  _t9 = $load _t8
+  _t10 = $gfp _t9 value
+  _t11 = $load _t10
+  _t12 = $gfp current value
+  _t13 = $load _t12
+  _t14 = $cmp gt _t11 _t13
+  _t15 = $arith mul _t7 _t14
+  $branch _t15 bb2 bb3
+
+bb2:
+  _t16 = $gfp current value
+  _t17 = $load _t16
+  tmp = $copy _t17
+  _t18 = $gfp current value
+  _t19 = $gfp current parent
+  _t20 = $load _t19
+  _t21 = $gfp _t20 value
+  _t22 = $load _t21
+  $store _t18 _t22
+  _t23 = $gfp current parent
+  _t24 = $load _t23
+  _t25 = $gfp _t24 value
+  $store _t25 tmp
+  _t26 = $gfp current parent
+  _t27 = $load _t26
+  current = $copy _t27
+  $jump bb1
+
+bb3:
+  $ret 
+
+entry:
+  _t1 = $gfp current parent
+  _t2 = $load _t1
+  parent = $copy _t2
+  $jump bb1
+}
+
+fn popMin(h:&heap) -> int {
+let _ret48:int, _t1:&&node, _t10:&int, _t11:int, _t12:int, _t13:&int, _t14:int, _t15:int, _t16:int, _t17:&&node, _t18:&node, _t19:int, _t2:&node, _t20:int, _t21:&&node, _t22:&node, _t23:&&node, _t24:&node, _t25:int, _t26:&int, _t27:&int, _t28:int, _t29:int, _t3:&int, _t30:&&node, _t31:&node, _t32:&&node, _t33:&node, _t34:int, _t35:&&node, _t36:&node, _t37:&&node, _t38:&&node, _t39:&node, _t4:int, _t40:&&node, _t41:&&node, _t42:&node, _t43:&int, _t44:&int, _t45:int, _t46:&&node, _t47:&node, _t5:&int, _t6:int, _t7:int, _t8:&&node, _t9:&int, bits:int, depth:int, last:&node, min:int, next:int
+bb1:
+  _t10 = $gfp h size
+  _t11 = $load _t10
+  _t12 = $call_dir log2(_t11) then bb3
+
+bb10:
+  _t21 = $gfp last right
+  _t22 = $load _t21
+  last = $copy _t22
+  $jump bb9
+
+bb11:
+  _t23 = $gfp last left
+  _t24 = $load _t23
+  last = $copy _t24
+  $jump bb9
+
+bb12:
+  _t41 = $gfp h root
+  _t42 = $load _t41
+  _t43 = $gfp _t42 value
+  _t44 = $gfp last value
+  _t45 = $load _t44
+  $store _t43 _t45
+  _t46 = $gfp h root
+  _t47 = $load _t46
+  $call_dir percolateDown(_t47) then bb15
+
+bb13:
+  _t35 = $gfp last parent
+  _t36 = $load _t35
+  _t37 = $gfp _t36 left
+  $store _t37 0
+  $jump bb12
+
+bb14:
+  _t38 = $gfp last parent
+  _t39 = $load _t38
+  _t40 = $gfp _t39 right
+  $store _t40 0
+  $jump bb12
+
+bb15:
+  _ret48 = $copy min
+  $jump exit
+
+bb2:
+  _t8 = $gfp h root
+  $store _t8 0
+  _t9 = $gfp h size
+  $store _t9 0
+  _ret48 = $copy min
+  $jump exit
+
+bb3:
+  depth = $copy _t12
+  _t13 = $gfp h size
+  _t14 = $load _t13
+  _t15 = $call_dir exp2(depth) then bb4
+
+bb4:
+  _t16 = $arith sub _t14 _t15
+  bits = $copy _t16
+  _t17 = $gfp h root
+  _t18 = $load _t17
+  last = $copy _t18
+  $jump bb5
+
+bb5:
+  _t19 = $cmp gt depth 0
+  $branch _t19 bb6 bb7
+
+bb6:
+  _t20 = $call_dir getBit(bits, depth) then bb8
+
+bb7:
+  _t26 = $gfp h size
+  _t27 = $gfp h size
+  _t28 = $load _t27
+  _t29 = $arith sub _t28 1
+  $store _t26 _t29
+  _t30 = $gfp last parent
+  _t31 = $load _t30
+  _t32 = $gfp _t31 left
+  _t33 = $load _t32
+  _t34 = $cmp eq _t33 last
+  $branch _t34 bb13 bb14
+
+bb8:
+  $branch _t20 bb10 bb11
+
+bb9:
+  _t25 = $arith sub depth 1
+  depth = $copy _t25
+  $jump bb5
+
+entry:
+  _t1 = $gfp h root
+  _t2 = $load _t1
+  _t3 = $gfp _t2 value
+  _t4 = $load _t3
+  min = $copy _t4
+  _t5 = $gfp h size
+  _t6 = $load _t5
+  _t7 = $cmp eq _t6 1
+  $branch _t7 bb2 bb1
+
+exit:
+  $ret _ret48
+}
+

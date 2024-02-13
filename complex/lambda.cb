@@ -1,0 +1,243 @@
+// λ calculus interpreter, with addition
+
+extern print: (int) -> _;
+
+// term kind: 0 → variable, 1 → application, 2 → lambda, 3 → constants, 4 → addition
+// terms are disjoint unions
+
+
+/*
+
+variable: x
+application: t1 t2
+lambda: λx. t1
+constant: n
+addition: t1 + t2
+
+*/
+let VAR: int, APP: int, LAM: int, CONST: int, ADD: int;
+
+struct term {
+    kind: int,
+    x: &var,
+    t1: &term,
+    t2: &term,
+    n: int
+}
+
+// variables are just pointers to this dummy object, so they are distinguished
+// by memory addresses.
+struct var {
+    id: int
+}
+
+fn apply(t1: &term, t2: &term) -> &term {
+    let t: &term;
+
+    t = new term;
+    t.kind = APP;
+    t.t1 = t1;
+    t.t2 = t2;
+
+    return t;
+}
+
+fn add(t1: &term, t2: &term) -> &term {
+    let t: &term;
+
+    t = new term;
+    t.kind = ADD;
+    t.t1 = t1;
+    t.t2 = t2;
+
+    return t;
+}
+
+fn lambda(x: &var, t1: &term) -> &term {
+    let t: &term;
+
+    t = new term;
+    t.kind = LAM;
+    t.x = x;
+    t.t1 = t1;
+
+    return t;
+}
+
+fn var(x: &var) -> &term {
+    let t: &term;
+
+    t = new term;
+    t.kind = VAR;
+    t.x = x;
+
+    return t;
+}
+
+fn const(n: int) -> &term {
+    let t: &term;
+
+    t = new term;
+    t.kind = CONST;
+    t.n = n;
+
+    return t;
+}
+
+// environments using association lists
+
+struct env {
+    x: &var,
+    v: &value,
+    next: &env
+}
+
+// values, kind: 0 -> number, 1 -> closure
+
+struct value {
+    kind: int,
+    n: int,
+    // closure members
+    env: &env,
+    x: &var,
+    body: &term
+}
+
+let NUM: int, CLO: int;
+
+fn bind(env: &env, x: &var, v: &value) -> &env {
+    let e: &env;
+    e = new env;
+    e.x = x;
+    e.v = v;
+    e.next = env;
+
+    return e;
+}
+
+fn lookup(env: &env, x: &var) -> &value {
+    let dummy: &value;
+    while env != nil {
+        if env.x == x {
+            return env.v;
+        }
+        env = env.next;
+    }
+
+    // deliberately cause a crash if the variable isn't found.
+    dummy.kind = -1;
+    return nil;
+}
+
+fn eval(env: &env, t: &term) -> &value {
+    let v: &value, v1: &value, v2: &value;
+    v = new value;
+
+    if t.kind == VAR {
+        return lookup(env, t.x);
+    }
+    if t.kind == CONST {
+        v.kind = NUM;
+        v.n = t.n;
+    }
+    if t.kind == LAM {
+        v.kind = CLO;
+        v.env = env;
+        v.body = t.t1;
+        v.x = t.x;
+    }
+    if t.kind == ADD {
+        v1 = eval(env, t.t1);
+        v2 = eval(env, t.t2);
+        v.kind = NUM;
+        v.n = v1.n + v2.n;
+    }
+    if t.kind == APP {
+        v1 = eval(env, t.t1);
+        v2 = eval(env, t.t2);
+        return eval(bind(v1.env, v1.x, v2), v1.body);
+    }
+    return v;
+}
+
+let indent: int;
+
+fn printI(n: int) -> _ {
+    print(n);
+    return;
+}
+
+fn printE(t: &term) -> _ {
+    if t == nil {
+        printI(-1);
+        return;
+    }
+    printI(t.kind);
+    indent = indent + 1;
+    if t.kind == VAR {
+        printI(t.x.id);
+    }
+    if t.kind == APP or t.kind == ADD {
+        printE(t.t1);
+        printE(t.t2);
+    }
+    if t.kind == LAM {
+        printI(t.x.id);
+        printE(t.t1);
+    }
+    if t.kind == CONST {
+        printI(t.n);
+    }
+    indent = indent - 1;
+    return;
+}
+
+fn printV(v: &value) -> _ {
+    if v == nil {
+        printI(-1);
+    } else {
+        printI(v.kind);
+        indent = indent + 1;
+        if v.kind == NUM {
+            printI(v.n);
+        } else {
+            printI(v.x.id);
+            printE(v.body);
+        }
+        indent = indent - 1;
+    }
+    return;
+}
+
+// initialize globals
+fn init() -> _ {
+    VAR = 0;
+    APP = 1;
+    LAM = 2;
+    CONST = 3;
+    ADD = 4;
+    NUM = 0;
+    CLO = 1;
+    return;
+}
+
+fn main() -> int {
+    let t: &term, double: &term, apply2: &term, x: &var, y: &var, env: &env;
+    init();
+    x = new var;
+    x.id = -1;
+    y = new var;
+    y.id = -2;
+
+    env = new env;
+
+    apply2 = lambda(x, lambda(y, apply(var(x), apply(var(x), var(y)))));
+    double = lambda(x, add(var(x), var(x)));
+
+    t = apply(apply(apply2, double), const(3));
+
+    printE(t);
+
+    printV(eval(env, t));
+    return 0;
+}

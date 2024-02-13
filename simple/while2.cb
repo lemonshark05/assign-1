@@ -1,0 +1,10 @@
+fn main() -> int {
+  let x: int, y: int, sum: int;
+  x = 10;
+  sum = 0;
+  while y < x {
+    y = y + 1;
+    sum = sum + y;
+  }
+  return sum;
+}

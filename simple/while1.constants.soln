@@ -1,0 +1,15 @@
+bb1:
+_t1 -> Top
+x -> Top
+
+bb2:
+_t1 -> Top
+x -> 3
+
+bb3:
+_t1 -> Top
+x -> 5
+
+entry:
+x -> 2
+

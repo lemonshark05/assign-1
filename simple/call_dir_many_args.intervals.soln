@@ -1,0 +1,10 @@
+bb1:
+_t1 -> (NegInf, PosInf)
+_t2 -> (NegInf, PosInf)
+_t3 -> (NegInf, PosInf)
+_t4 -> (NegInf, PosInf)
+x -> (NegInf, PosInf)
+
+entry:
+_t1 -> (NegInf, PosInf)
+

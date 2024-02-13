@@ -1,0 +1,10 @@
+// expected: 21
+
+fn main() -> int {
+    let x: int, y: int, cond: int;
+    cond = 0;
+    if cond { x = 1; } else { x = 2; }
+    if cond + 1 { y = 1; } else { y = 2; }
+
+    return x * 10 + y;
+}

@@ -1,0 +1,9 @@
+fn main() -> int {
+let _t1:int, i:int, x:&int
+entry:
+  _t1 = $arith sub 0 5
+  i = $copy _t1
+  x = $alloc i [_alloc1]
+  $ret 0
+}
+

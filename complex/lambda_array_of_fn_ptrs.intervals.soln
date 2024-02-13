@@ -1,0 +1,226 @@
+bb1:
+ADD -> (NegInf, PosInf)
+APP -> (NegInf, PosInf)
+CLO -> (NegInf, PosInf)
+CONST -> (NegInf, PosInf)
+LAM -> (NegInf, PosInf)
+NUM -> (NegInf, PosInf)
+VAR -> (NegInf, PosInf)
+_t2 -> [-1, -1]
+_t4 -> [-2, -2]
+indent -> (NegInf, PosInf)
+
+bb10:
+ADD -> (NegInf, PosInf)
+APP -> (NegInf, PosInf)
+CLO -> (NegInf, PosInf)
+CONST -> (NegInf, PosInf)
+LAM -> (NegInf, PosInf)
+NUM -> (NegInf, PosInf)
+VAR -> (NegInf, PosInf)
+_t2 -> [-1, -1]
+_t4 -> [-2, -2]
+indent -> (NegInf, PosInf)
+
+bb11:
+ADD -> (NegInf, PosInf)
+APP -> (NegInf, PosInf)
+CLO -> (NegInf, PosInf)
+CONST -> (NegInf, PosInf)
+LAM -> (NegInf, PosInf)
+NUM -> (NegInf, PosInf)
+VAR -> (NegInf, PosInf)
+_t2 -> [-1, -1]
+_t4 -> [-2, -2]
+indent -> (NegInf, PosInf)
+
+bb12:
+ADD -> (NegInf, PosInf)
+APP -> (NegInf, PosInf)
+CLO -> (NegInf, PosInf)
+CONST -> (NegInf, PosInf)
+LAM -> (NegInf, PosInf)
+NUM -> (NegInf, PosInf)
+VAR -> (NegInf, PosInf)
+_t2 -> [-1, -1]
+_t4 -> [-2, -2]
+indent -> (NegInf, PosInf)
+
+bb13:
+ADD -> (NegInf, PosInf)
+APP -> (NegInf, PosInf)
+CLO -> (NegInf, PosInf)
+CONST -> (NegInf, PosInf)
+LAM -> (NegInf, PosInf)
+NUM -> (NegInf, PosInf)
+VAR -> (NegInf, PosInf)
+_t2 -> [-1, -1]
+_t4 -> [-2, -2]
+indent -> (NegInf, PosInf)
+
+bb14:
+ADD -> (NegInf, PosInf)
+APP -> (NegInf, PosInf)
+CLO -> (NegInf, PosInf)
+CONST -> (NegInf, PosInf)
+LAM -> (NegInf, PosInf)
+NUM -> (NegInf, PosInf)
+VAR -> (NegInf, PosInf)
+_t2 -> [-1, -1]
+_t4 -> [-2, -2]
+indent -> (NegInf, PosInf)
+
+bb15:
+ADD -> (NegInf, PosInf)
+APP -> (NegInf, PosInf)
+CLO -> (NegInf, PosInf)
+CONST -> (NegInf, PosInf)
+LAM -> (NegInf, PosInf)
+NUM -> (NegInf, PosInf)
+VAR -> (NegInf, PosInf)
+_t2 -> [-1, -1]
+_t4 -> [-2, -2]
+indent -> (NegInf, PosInf)
+
+bb16:
+ADD -> (NegInf, PosInf)
+APP -> (NegInf, PosInf)
+CLO -> (NegInf, PosInf)
+CONST -> (NegInf, PosInf)
+LAM -> (NegInf, PosInf)
+NUM -> (NegInf, PosInf)
+VAR -> (NegInf, PosInf)
+_t2 -> [-1, -1]
+_t4 -> [-2, -2]
+indent -> (NegInf, PosInf)
+
+bb17:
+ADD -> (NegInf, PosInf)
+APP -> (NegInf, PosInf)
+CLO -> (NegInf, PosInf)
+CONST -> (NegInf, PosInf)
+LAM -> (NegInf, PosInf)
+NUM -> (NegInf, PosInf)
+VAR -> (NegInf, PosInf)
+_t2 -> [-1, -1]
+_t4 -> [-2, -2]
+indent -> (NegInf, PosInf)
+
+bb18:
+ADD -> (NegInf, PosInf)
+APP -> (NegInf, PosInf)
+CLO -> (NegInf, PosInf)
+CONST -> (NegInf, PosInf)
+LAM -> (NegInf, PosInf)
+NUM -> (NegInf, PosInf)
+VAR -> (NegInf, PosInf)
+_t2 -> [-1, -1]
+_t4 -> [-2, -2]
+indent -> (NegInf, PosInf)
+
+bb2:
+ADD -> (NegInf, PosInf)
+APP -> (NegInf, PosInf)
+CLO -> (NegInf, PosInf)
+CONST -> (NegInf, PosInf)
+LAM -> (NegInf, PosInf)
+NUM -> (NegInf, PosInf)
+VAR -> (NegInf, PosInf)
+_t2 -> [-1, -1]
+_t4 -> [-2, -2]
+indent -> (NegInf, PosInf)
+
+bb3:
+ADD -> (NegInf, PosInf)
+APP -> (NegInf, PosInf)
+CLO -> (NegInf, PosInf)
+CONST -> (NegInf, PosInf)
+LAM -> (NegInf, PosInf)
+NUM -> (NegInf, PosInf)
+VAR -> (NegInf, PosInf)
+_t2 -> [-1, -1]
+_t4 -> [-2, -2]
+indent -> (NegInf, PosInf)
+
+bb4:
+ADD -> (NegInf, PosInf)
+APP -> (NegInf, PosInf)
+CLO -> (NegInf, PosInf)
+CONST -> (NegInf, PosInf)
+LAM -> (NegInf, PosInf)
+NUM -> (NegInf, PosInf)
+VAR -> (NegInf, PosInf)
+_t2 -> [-1, -1]
+_t4 -> [-2, -2]
+indent -> (NegInf, PosInf)
+
+bb5:
+ADD -> (NegInf, PosInf)
+APP -> (NegInf, PosInf)
+CLO -> (NegInf, PosInf)
+CONST -> (NegInf, PosInf)
+LAM -> (NegInf, PosInf)
+NUM -> (NegInf, PosInf)
+VAR -> (NegInf, PosInf)
+_t2 -> [-1, -1]
+_t4 -> [-2, -2]
+indent -> (NegInf, PosInf)
+
+bb6:
+ADD -> (NegInf, PosInf)
+APP -> (NegInf, PosInf)
+CLO -> (NegInf, PosInf)
+CONST -> (NegInf, PosInf)
+LAM -> (NegInf, PosInf)
+NUM -> (NegInf, PosInf)
+VAR -> (NegInf, PosInf)
+_t2 -> [-1, -1]
+_t4 -> [-2, -2]
+indent -> (NegInf, PosInf)
+
+bb7:
+ADD -> (NegInf, PosInf)
+APP -> (NegInf, PosInf)
+CLO -> (NegInf, PosInf)
+CONST -> (NegInf, PosInf)
+LAM -> (NegInf, PosInf)
+NUM -> (NegInf, PosInf)
+VAR -> (NegInf, PosInf)
+_t2 -> [-1, -1]
+_t4 -> [-2, -2]
+indent -> (NegInf, PosInf)
+
+bb8:
+ADD -> (NegInf, PosInf)
+APP -> (NegInf, PosInf)
+CLO -> (NegInf, PosInf)
+CONST -> (NegInf, PosInf)
+LAM -> (NegInf, PosInf)
+NUM -> (NegInf, PosInf)
+VAR -> (NegInf, PosInf)
+_t2 -> [-1, -1]
+_t4 -> [-2, -2]
+indent -> (NegInf, PosInf)
+
+bb9:
+ADD -> (NegInf, PosInf)
+APP -> (NegInf, PosInf)
+CLO -> (NegInf, PosInf)
+CONST -> (NegInf, PosInf)
+LAM -> (NegInf, PosInf)
+NUM -> (NegInf, PosInf)
+VAR -> (NegInf, PosInf)
+_t2 -> [-1, -1]
+_t4 -> [-2, -2]
+indent -> (NegInf, PosInf)
+
+entry:
+ADD -> (NegInf, PosInf)
+APP -> (NegInf, PosInf)
+CLO -> (NegInf, PosInf)
+CONST -> (NegInf, PosInf)
+LAM -> (NegInf, PosInf)
+NUM -> (NegInf, PosInf)
+VAR -> (NegInf, PosInf)
+indent -> (NegInf, PosInf)
+

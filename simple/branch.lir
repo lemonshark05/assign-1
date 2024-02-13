@@ -1,0 +1,32 @@
+fn main() -> int {
+let _t1:int, _t2:int, _t3:int, cond:int, x:int, y:int
+bb1:
+  _t1 = $arith add cond 1
+  $branch _t1 bb5 bb6
+
+bb2:
+  x = $copy 1
+  $jump bb1
+
+bb3:
+  x = $copy 2
+  $jump bb1
+
+bb4:
+  _t2 = $arith mul x 10
+  _t3 = $arith add _t2 y
+  $ret _t3
+
+bb5:
+  y = $copy 1
+  $jump bb4
+
+bb6:
+  y = $copy 2
+  $jump bb4
+
+entry:
+  cond = $copy 0
+  $branch cond bb2 bb3
+}
+

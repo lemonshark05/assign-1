@@ -1,0 +1,11 @@
+struct foo {
+  f1: int,
+  f2: &foo
+}
+
+fn main() -> int {
+    let x: &foo;
+    x = new foo;
+    x.f1 = 7;
+    return x.f1;
+}

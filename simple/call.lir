@@ -1,0 +1,18 @@
+square:&(int) -> int
+
+fn main() -> int {
+let _t1:int
+bb1:
+  $ret _t1
+
+entry:
+  _t1 = $call_dir square(3) then bb1
+}
+
+fn square(x:int) -> int {
+let _t1:int
+entry:
+  _t1 = $arith mul x x
+  $ret _t1
+}
+

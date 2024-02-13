@@ -1,0 +1,23 @@
+fn main() -> int {
+let _t1:&int, _t10:int, _t11:&int, _t12:int, _t2:&int, _t3:int, _t4:&int, _t5:int, _t6:int, _t7:&int, _t8:&int, _t9:int, x:&&int, y:int
+entry:
+  x = $alloc 1 [_alloc1]
+  _t1 = $alloc 1 [_alloc2]
+  $store x _t1
+  _t2 = $load x
+  $store _t2 7
+  _t3 = $cmp neq x 0
+  _t4 = $load x
+  _t5 = $load _t4
+  _t6 = $arith add _t3 _t5
+  y = $copy _t6
+  _t7 = $load x
+  _t8 = $load x
+  _t9 = $load _t8
+  _t10 = $arith mul _t9 y
+  $store _t7 _t10
+  _t11 = $load x
+  _t12 = $load _t11
+  $ret _t12
+}
+

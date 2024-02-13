@@ -1,0 +1,34 @@
+extern print: (int) -> _;
+
+struct s {
+    f1: int,
+    f2: int,
+    f3: int
+}
+
+fn foo(n: int) -> &s {
+    let p: &s;
+    p = new s;
+    p.f1 = n;
+    p.f2 = n + 1;
+    p.f3 = n + 2;
+
+    return p;
+}
+
+fn bar(n: int) -> &s {
+    let p: &s = foo(n * 2);
+    p.f1 = 100;
+    return p;
+}
+
+fn baz(p: &s, q: &s) -> &s {
+    print(p.f1 - q.f1);
+    print(p.f2 - q.f2);
+    print(p.f3 - q.f3);
+    return p;
+}
+
+fn main() -> int {
+    return baz(foo(10), bar(3)).f1;
+}

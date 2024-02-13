@@ -19,7 +19,11 @@ public class DataFlowConstants {
         }
     }
 
+    static Set<String> addressTakenVariables = new HashSet<>();
+    static Set<String> globalVariables = new HashSet<>();
+
     public static void dataFlow(String filePath) {
+        List<String> varOrder = new LinkedList<>();
         Map<String, List<Operation>> basicBlocks = new HashMap<>();
         Map<String, VariableState> variableStates = new HashMap<>();
         Map<String, List<String>> blockSuccessors = new HashMap<>();
@@ -28,9 +32,9 @@ public class DataFlowConstants {
         Map<String, VariableState> postStates = new HashMap<>();
 
         parseLirFile(filePath, basicBlocks, variableStates, worklist, blockSuccessors);
-        // Initialize pre-states and post-states for all blocks to bottom (⊥)
+        // Initialize all blocks to bottom (⊥)
         basicBlocks.keySet().forEach(blockName -> {
-            preStates.put(blockName, new VariableState()); // Assuming bottom state is default
+            preStates.put(blockName, new VariableState());
             postStates.put(blockName, new VariableState());
         });
 
@@ -39,25 +43,43 @@ public class DataFlowConstants {
             String block = operation.block;
             VariableState preState = computePreState(block, preStates, postStates, blockSuccessors);
             VariableState oldPostState = postStates.get(block) != null ? postStates.get(block).clone() : new VariableState();
-            VariableState newPostState = analyzeInstruction(operation, preState, variableStates);
+            VariableState newPostState = analyzeInstruction(varOrder, operation, preState, variableStates);
 
             if (!newPostState.equals(oldPostState)) {
-                postStates.put(block, newPostState);
-                blockSuccessors.getOrDefault(block, new ArrayList<>()).forEach(successor -> {
-                    basicBlocks.get(successor).forEach(op -> worklist.offer(op)); // Re-enqueue operations for analysis
-                });
+                List<String> successors = blockSuccessors.getOrDefault(block, new ArrayList<>());
+                for (String successor : successors) {
+                    List<Operation> operationsInSuccessor = basicBlocks.get(successor);
+                    if (operationsInSuccessor != null) {
+                        for (Operation opera : operationsInSuccessor) {
+                            worklist.offer(opera);
+                        }
+                    }
+                }
             }
         }
-        printAnalysisResults(basicBlocks, variableStates);
+        printAnalysisResults(varOrder, basicBlocks, variableStates);
     }
 
-    private static VariableState computePreState(String block, Map<String, VariableState> preStates, Map<String, VariableState> postStates, Map<String, List<String>> blockSuccessors) {
-        // Compute pre-state logic here
-        return new VariableState();
+    private static VariableState computePreState(String block, Map<String, VariableState> preStates, Map<String, VariableState> postStates, Map<String, List<String>> blockPredecessors) {
+        VariableState preState = new VariableState();
+        List<String> predecessors = blockPredecessors.get(block);
+
+        if (predecessors != null) {
+            for (String pred : predecessors) {
+                VariableState predPostState = postStates.get(pred);
+
+                if (predPostState != null) {
+                    preState = preState.join(predPostState);
+                } else {
+                    preState.markAsTop();
+                    break;
+                }
+            }
+        }
+        return preState;
     }
 
-
-    private static VariableState analyzeInstruction(Operation operation, VariableState currentState, Map<String, VariableState> variableStates) {
+    private static VariableState analyzeInstruction(List<String> varOrder, Operation operation, VariableState currentState, Map<String, VariableState> variableStates) {
         String instruction = operation.instruction;
         Pattern operationPattern = Pattern.compile("\\$(store|load|alloc|cmp|gep|copy|call_ext|addrof|arith|gfp|branch|jump|ret|call_dir|call_idr)");
         Matcher matcher = operationPattern.matcher(instruction);
@@ -67,20 +89,26 @@ public class DataFlowConstants {
             String opera = matcher.group(1);
             switch (opera) {
                 case "store":
-                    if (parts.length > 2) {
-                        String pointerVar = parts[1];
-                        String value = parts[2];
-                        VariableState pointerState = variableStates.get(pointerVar);
-                        if (pointerState != null && pointerState.getPointsTo() != null) {
-                            String targetVar = pointerState.getPointsTo();
-                            VariableState targetVarState = variableStates.get(targetVar);
-                            if (targetVarState != null) {
-                                VariableState newValueState = new VariableState();
-                                newValueState.isTop = true;
-                                targetVarState.weakUpdate(newValueState);
+                    String pointerVar = parts[1];
+                    String valueVarOrConstant = parts[2];
+                    if (valueVarOrConstant.matches("\\d+")) {
+                        if (variableStates.containsKey(pointerVar) && variableStates.get(pointerVar).getPointsTo() != null) {
+                            String pointedVar = variableStates.get(pointerVar).getPointsTo();
+                            if (addressTakenVariables.contains(pointedVar) || globalVariables.contains(pointedVar)) {
+                                VariableState newStates = variableStates.get(pointedVar);
+                                variableStates.get(pointedVar).setConstantValue(Integer.parseInt(valueVarOrConstant));
                             }
-                        } else {
-
+                        }
+                    } else if (variableStates.containsKey(valueVarOrConstant)) {
+                        VariableState valueState = variableStates.get(valueVarOrConstant);
+                        if (variableStates.containsKey(pointerVar) && variableStates.get(pointerVar).getPointsTo() != null) {
+                            String pointedVar = variableStates.get(pointerVar).getPointsTo();
+                            if (addressTakenVariables.contains(pointedVar)) {
+                                variableStates.get(pointedVar).weakUpdate(valueState);
+                                if (!varOrder.contains(pointedVar)) {
+                                    varOrder.add(pointedVar);
+                                }
+                            }
                         }
                     }
                     break;
@@ -88,23 +116,46 @@ public class DataFlowConstants {
                     if (variableStates.containsKey(leftVar)) {
                         VariableState loadedState = variableStates.get(leftVar);
                         currentState.merge(loadedState);
+                        loadedState.markAsTop();
+                        varOrder.remove(leftVar);
+                        varOrder.add(leftVar);
                     }
                     break;
                 case "alloc":
-                    variableStates.put(leftVar, new VariableState());
                     break;
                 case "cmp":
+                    handleCmp(parts, leftVar, varOrder, variableStates);
                 case "arith":
-                    currentState.markAsTop();
+                    handleArith(parts, leftVar, varOrder, variableStates);
                     break;
                 case "gep":
                     break;
                 case "copy":
                     if (parts.length > 3) {
                         String copiedVar = parts[3];
+                        VariableState updateVar = variableStates.get(leftVar);
                         VariableState copiedState = variableStates.get(copiedVar);
-                        if (copiedState != null && copiedState.getPointsTo() != null) {
-                            variableStates.get(leftVar).setPointsTo(copiedState.getPointsTo());
+                        if (copiedState != null) {
+                            if (copiedState.getPointsTo() != null) {
+                                updateVar.setPointsTo(copiedState.getPointsTo());
+                            } else if (copiedState.isInt() && copiedState.hasConstantValue()) {
+                                updateVar.setConstantValue(copiedState.getConstantValue());
+                                varOrder.remove(leftVar);
+                                varOrder.add(leftVar);
+                            } else {
+                                updateVar.markAsTop();
+                                varOrder.remove(leftVar);
+                                varOrder.add(leftVar);
+                            }
+                        } else {
+                            try {
+                                int value = Integer.parseInt(copiedVar);
+                                updateVar.setConstantValue(value);
+                            } catch (NumberFormatException e) {
+                                updateVar.markAsTop();
+                            }
+                            varOrder.remove(leftVar);
+                            varOrder.add(leftVar);
                         }
                     }
                     break;
@@ -115,6 +166,9 @@ public class DataFlowConstants {
                     }
                     break;
                 case "call_idr":
+                    for (String global : globalVariables) {
+                        variableStates.get(global).markAsTop();
+                    }
                     break;
                 case "addrof":
                     if (parts.length > 2) {
@@ -123,15 +177,20 @@ public class DataFlowConstants {
                     }
                     break;
                 case "gfp":
+                    if (variableStates.containsKey(leftVar)) {
+                        variableStates.get(leftVar).markAsTop();
+                    } else {
+                        VariableState newTopState = new VariableState();
+                        newTopState.markAsTop();
+                        variableStates.put(leftVar, newTopState);
+                    }
+                    varOrder.remove(leftVar);
+                    varOrder.add(leftVar);
                     break;
                 case "branch":
                 case "jump":
                     break;
                 case "ret":
-                    if (parts.length > 1) {
-                        String retVar = parts[1];
-                        currentState.markAsTop();
-                    }
                     break;
                 default:
                     break;
@@ -139,7 +198,97 @@ public class DataFlowConstants {
         }
         return currentState;
     }
+    private static void handleArith(String[] parts, String leftVar, List<String> varOrder, Map<String, VariableState> variableStates) {
+        if (parts.length < 5) return;
 
+        String operation = parts[3];
+        String operand1 = parts[4];
+        String operand2 = parts[5];
+
+        Integer result = null;
+        boolean isTop = false;
+
+        Integer value1 = null, value2 = null;
+        VariableState operand1State = null, operand2State = null;
+
+        try {
+            value1 = Integer.parseInt(operand1);
+        } catch (NumberFormatException e) {
+            operand1State = variableStates.get(operand1);
+            if (operand1State != null && operand1State.hasConstantValue()) {
+                value1 = operand1State.getConstantValue();
+            } else if (operand1State != null && operand1State.isTop()) {
+                isTop = true;
+            }
+        }
+
+        try {
+            value2 = Integer.parseInt(operand2);
+        } catch (NumberFormatException e) {
+            operand2State = variableStates.get(operand2);
+            if (operand2State != null && operand2State.hasConstantValue()) {
+                value2 = operand2State.getConstantValue();
+            } else if (operand2State != null && operand2State.isTop()) {
+                isTop = true;
+            }
+        }
+
+        VariableState leftState = variableStates.get(leftVar);
+
+        if (isTop) {
+            leftState.markAsTop();
+        } else if (value1 != null && value2 != null) {
+            result = performArithmetic(operation, value1, value2);
+            if (result != null) {
+                leftState.setConstantValue(result);
+            } else {
+                leftState.markAsTop();
+            }
+        } else {
+
+        }
+
+        varOrder.remove(leftVar);
+        varOrder.add(leftVar);
+    }
+
+    private static void handleCmp(String[] parts, String leftVar, List<String> varOrder, Map<String, VariableState> variableStates) {
+        if (parts.length < 5) return;
+
+        String operation = parts[3];
+        String operand1 = parts[4];
+        String operand2 = parts[5];
+
+        boolean result = false;
+        boolean isTop = false;
+
+        Integer value1 = null, value2 = null;
+        VariableState operand1State = null, operand2State = null;
+
+        try {
+            value1 = Integer.parseInt(operand1);
+        } catch (NumberFormatException e) {
+            isTop = true;
+        }
+
+        try {
+            value2 = Integer.parseInt(operand2);
+        } catch (NumberFormatException e) {
+            isTop = true;
+        }
+
+        VariableState leftState = variableStates.get(leftVar);
+
+        if (isTop) {
+            leftState.markAsTop();
+        } else if (value1 != null && value2 != null) {
+            result = performComparison(operation, value1, value2);
+            leftState.markAsTop();
+        }
+
+        varOrder.remove(leftVar);
+        varOrder.add(leftVar);
+    }
 
     private static void parseLirFile(String filePath, Map<String, List<Operation>> basicBlocks, Map<String, VariableState> variableStates, Queue<Operation> worklist, Map<String, List<String>> blockSuccessors) {
         try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
@@ -164,8 +313,27 @@ public class DataFlowConstants {
                         String variablesPart = line.substring("let ".length());
                         String[] variables = variablesPart.split(",\\s*");
                         for (String varDeclaration : variables) {
-                            String varName = varDeclaration.split(":")[0].trim();
-                            variableStates.put(varName, new VariableState());
+                            String[] parts = varDeclaration.split(":");
+                            String varName = parts[0].trim();
+                            // just get int type
+                            String type = parts[1].trim();
+                            VariableState newState = new VariableState();
+                            if (type.startsWith("&")) {
+                                newState.setPointsTo(type.substring(1));
+                            }else if(type.equals("int")){
+                                newState.setInt(true);
+                            }
+                            globalVariables.add(varName);
+                            variableStates.put(varName, newState);
+                        }
+                    } else if (line.contains("$addrof")) {
+                        String[] parts = line.split(" ");
+                        if (parts.length > 3) {
+                            String address = parts[0];
+                            String pointTo = parts[3];
+                            variableStates.get(address).setPointsTo(pointTo);
+                            String addressTakenVar = parts[3];
+                            addressTakenVariables.add(addressTakenVar);
                         }
                     } else {
                         if (currentBlock != null) {
@@ -185,6 +353,39 @@ public class DataFlowConstants {
         }
     }
 
+    private static Integer performArithmetic(String op, Integer val1, Integer val2) {
+        switch (op) {
+            case "add":
+                return val1 + val2;
+            case "sub":
+                return val1 - val2;
+            case "mul":
+                return val1 * val2;
+            case "div":
+                if (val2 == 0) return null;
+                return val1 / val2;
+            default:
+                return null;
+        }
+    }
+    private static Boolean performComparison(String op, Integer val1, Integer val2) {
+        switch (op) {
+            case "eq":
+                return Objects.equals(val1, val2);
+            case "neq":
+                return !Objects.equals(val1, val2);
+            case "lt":
+                return val1 < val2;
+            case "lte":
+                return val1 <= val2;
+            case "gt":
+                return val1 > val2;
+            case "gte":
+                return val1 >= val2;
+            default:
+                return null;
+        }
+    }
     private static String extractTargetBlock(String instruction) {
         Pattern pattern = Pattern.compile("\\$(branch|jump)\\s+(\\w+)");
         Matcher matcher = pattern.matcher(instruction);
@@ -193,29 +394,26 @@ public class DataFlowConstants {
         }
         return "";
     }
-    private static void parseFunctionContent(String line, Map<String, VariableState> variableStates, Queue<Operation> worklist, String currentBlock) {
-        if (line.startsWith("let ")) {
-            String variablesPart = line.substring(4);
-            String[] variables = variablesPart.split(",");
 
-            for (String var : variables) {
-                String varName = var.split(":")[0].trim(); // Get the variable name before the colon
-                variableStates.put(varName, new VariableState()); // Initialize and put it in the map
-            }
-        } else {
-            worklist.add(new Operation(currentBlock, line));
-        }
-    }
+    private static void printAnalysisResults(List<String> varOrder, Map<String, List<Operation>> basicBlocks, Map<String, VariableState> variableStates) {
+        // Sort the basic block names alphabetically
+        List<String> sortedBlockNames = new ArrayList<>(basicBlocks.keySet());
+        Collections.sort(sortedBlockNames);
 
-    private static void printAnalysisResults(Map<String, List<Operation>> basicBlocks, Map<String, VariableState> variableStates) {
-        basicBlocks.forEach((blockName, instructions) -> {
+        for (String blockName : sortedBlockNames) {
             System.out.println(blockName + ":");
-            variableStates.forEach((varName, state) -> {
-                if (state.isTop) {
-                    System.out.println(varName + " -> Top");
+            for (String varName : varOrder) {
+                VariableState state = variableStates.get(varName);
+                if (state != null) {
+                    if (state.isTop()) {
+                        System.out.println(varName + " -> Top");
+                    } else if (state.hasConstantValue()) {
+                        System.out.println(varName + " -> " + state.getConstantValue());
+                    }
                 }
-            });
-        });
+            }
+            System.out.println();
+        }
     }
 
     public static void main(String[] args) {

@@ -1,0 +1,5 @@
+fn main() -> int {
+  let p: &int;
+  p = new int;
+  return p != nil;
+}

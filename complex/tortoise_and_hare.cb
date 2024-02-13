@@ -1,0 +1,33 @@
+struct list {
+  value: int,
+  next: &list
+}
+
+fn main() -> int {
+  let n: &list, m: &list, p: &list;
+  let i: int = 10;
+  let tortoise: &list, hare: &list;
+
+  n = new list;
+  m = n;
+  while i > 0 {
+    n.next = new list;
+    n.value = i;
+    p = n;
+    n = n.next;
+    i = i - 1;
+  }
+
+  tortoise = m;
+  hare = m.next;
+  
+  while (tortoise != nil) * (hare != nil) * (tortoise != hare) {
+    tortoise = tortoise.next;
+    hare = hare.next;
+    if hare != nil {
+      hare = hare.next;
+    }
+  }
+
+  return tortoise == hare;
+}

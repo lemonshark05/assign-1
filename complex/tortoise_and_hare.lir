@@ -1,0 +1,70 @@
+struct list {
+  next:&list
+  value:int
+}
+
+fn main() -> int {
+let _t1:int, _t10:int, _t11:int, _t12:int, _t13:int, _t14:int, _t15:&&list, _t16:&list, _t17:&&list, _t18:&list, _t19:int, _t2:&&list, _t20:&&list, _t21:&list, _t22:int, _t3:&list, _t4:&int, _t5:&&list, _t6:&list, _t7:int, _t8:&&list, _t9:&list, hare:&list, i:int, m:&list, n:&list, p:&list, tortoise:&list
+bb1:
+  _t1 = $cmp gt i 0
+  $branch _t1 bb2 bb3
+
+bb2:
+  _t2 = $gfp n next
+  _t3 = $alloc 1 [_alloc2]
+  $store _t2 _t3
+  _t4 = $gfp n value
+  $store _t4 i
+  p = $copy n
+  _t5 = $gfp n next
+  _t6 = $load _t5
+  n = $copy _t6
+  _t7 = $arith sub i 1
+  i = $copy _t7
+  $jump bb1
+
+bb3:
+  tortoise = $copy m
+  _t8 = $gfp m next
+  _t9 = $load _t8
+  hare = $copy _t9
+  $jump bb4
+
+bb4:
+  _t10 = $cmp neq tortoise 0
+  _t11 = $cmp neq hare 0
+  _t12 = $arith mul _t10 _t11
+  _t13 = $cmp neq tortoise hare
+  _t14 = $arith mul _t12 _t13
+  $branch _t14 bb5 bb6
+
+bb5:
+  _t15 = $gfp tortoise next
+  _t16 = $load _t15
+  tortoise = $copy _t16
+  _t17 = $gfp hare next
+  _t18 = $load _t17
+  hare = $copy _t18
+  _t19 = $cmp neq hare 0
+  $branch _t19 bb8 bb7
+
+bb6:
+  _t22 = $cmp eq tortoise hare
+  $ret _t22
+
+bb7:
+  $jump bb4
+
+bb8:
+  _t20 = $gfp hare next
+  _t21 = $load _t20
+  hare = $copy _t21
+  $jump bb7
+
+entry:
+  i = $copy 10
+  n = $alloc 1 [_alloc1]
+  m = $copy n
+  $jump bb1
+}
+

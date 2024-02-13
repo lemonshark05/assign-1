@@ -1,0 +1,17 @@
+struct foo {
+  f1: int,
+  f2: &foo
+}
+
+fn main() -> int {
+    let x: &foo, y: &foo;
+    x = new foo;
+    x.f1 = 7;
+    x.f2 = new foo;
+    x.f2.f2 = new foo;
+    y = x.f2;
+    y.f2.f1 = 2;
+    y.f1 = 5;
+    x.f1 = 3;
+    return x.f1 + x.f2.f1 * 6 + x.f2.f2.f1 * 36;
+}

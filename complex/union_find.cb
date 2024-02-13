@@ -1,0 +1,73 @@
+// Union-find (disjoint set) data structure using arrays, path compression, and
+// union by rank.
+
+extern print: (int) -> _;
+
+struct UF {
+    parent: &int,
+    rank: &int
+}
+
+fn find(uf: &UF, n: int) -> int {
+    let p: int, r: int;
+    if uf.parent[n] == n or uf.parent[n] == 0 {
+	return n;
+    } else {
+	p = uf.parent[n];
+	r = find(uf, p);
+	uf.parent[n] = r;
+	return r;
+    }
+}
+
+fn union(uf: &UF, a: int, b: int) -> _ {
+    let rA: int, rB: int;
+    a = find(uf, a);
+    b = find(uf, b);
+    if a == b {
+	return;
+    }
+
+    rA = uf.rank[a];
+    rB = uf.rank[b];
+
+    if rA > rB {
+	uf.parent[b] = a;
+	return;
+    }
+
+    if rA == rB {
+	uf.parent[b] = a;
+	uf.rank[a] = uf.rank[a] + 1;
+	return;
+    }
+
+    uf.parent[a] = b;
+    return;
+}
+
+fn mkUF(n: int) -> &UF {
+    let uf: &UF;
+    uf = new UF;
+    uf.parent = new int n;
+    uf.rank = new int n;
+    return uf;
+}
+
+fn main() -> int {
+    let n: int = 10, uf: &UF = mkUF(n);
+    let i: int, j: int;
+
+    union(uf, 1, 2);
+    union(uf, 3, 1);
+    union(uf, 4, 5);
+    union(uf, 6, 8);
+    union(uf, 5, 8);
+
+    while i < n {
+	print(find(uf, i));
+	i = i + 1;
+    }
+
+    return 0;
+}

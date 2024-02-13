@@ -1,0 +1,21 @@
+foo:&() -> _
+
+extern print:(int) -> _
+
+fn foo() -> _ {
+entry:
+  $call_ext print(10)
+  $ret 
+}
+
+fn main() -> int {
+bb1:
+  $call_dir foo() then bb2
+
+bb2:
+  $ret 0
+
+entry:
+  $call_dir foo() then bb1
+}
+

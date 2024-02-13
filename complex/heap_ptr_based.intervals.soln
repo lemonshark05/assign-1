@@ -1,0 +1,101 @@
+bb1:
+K -> [107, 107]
+i -> [0, 0]
+
+bb10:
+K -> (NegInf, PosInf)
+_t10 -> (NegInf, PosInf)
+_t2 -> (NegInf, PosInf)
+_t3 -> [0, 1]
+_t4 -> [0, PosInf)
+_t5 -> (NegInf, PosInf)
+_t6 -> [1, PosInf)
+_t8 -> (NegInf, PosInf)
+_t9 -> [0, 1]
+i -> [0, PosInf)
+
+bb2:
+K -> (NegInf, PosInf)
+_t2 -> (NegInf, PosInf)
+_t3 -> [0, 1]
+_t4 -> [0, PosInf)
+_t5 -> (NegInf, PosInf)
+_t6 -> [1, PosInf)
+i -> [0, PosInf)
+
+bb3:
+K -> (NegInf, PosInf)
+_t2 -> (NegInf, PosInf)
+_t3 -> [0, 1]
+_t4 -> [0, PosInf)
+_t5 -> (NegInf, PosInf)
+_t6 -> [1, PosInf)
+i -> [0, PosInf)
+
+bb4:
+K -> (NegInf, PosInf)
+_t2 -> (NegInf, PosInf)
+_t3 -> [0, 1]
+_t4 -> [0, PosInf)
+_t5 -> (NegInf, PosInf)
+_t6 -> [1, PosInf)
+i -> [0, PosInf)
+
+bb5:
+K -> (NegInf, PosInf)
+_t2 -> (NegInf, PosInf)
+_t3 -> [0, 1]
+_t4 -> [0, PosInf)
+_t5 -> (NegInf, PosInf)
+_t6 -> [1, PosInf)
+i -> [0, PosInf)
+
+bb6:
+K -> (NegInf, PosInf)
+_t2 -> (NegInf, PosInf)
+_t3 -> [0, 1]
+_t4 -> [0, PosInf)
+_t5 -> (NegInf, PosInf)
+_t6 -> [1, PosInf)
+i -> [1, PosInf)
+
+bb7:
+K -> (NegInf, PosInf)
+_t10 -> (NegInf, PosInf)
+_t2 -> (NegInf, PosInf)
+_t3 -> [0, 1]
+_t4 -> [0, PosInf)
+_t5 -> (NegInf, PosInf)
+_t6 -> [1, PosInf)
+_t8 -> (NegInf, PosInf)
+_t9 -> [0, 1]
+i -> [0, PosInf)
+
+bb8:
+K -> (NegInf, PosInf)
+_t10 -> (NegInf, PosInf)
+_t2 -> (NegInf, PosInf)
+_t3 -> [0, 1]
+_t4 -> [0, PosInf)
+_t5 -> (NegInf, PosInf)
+_t6 -> [1, PosInf)
+_t8 -> (NegInf, PosInf)
+_t9 -> [0, 1]
+i -> [0, PosInf)
+
+bb9:
+K -> (NegInf, PosInf)
+_t10 -> (NegInf, PosInf)
+_t2 -> (NegInf, PosInf)
+_t3 -> [0, 1]
+_t4 -> [0, PosInf)
+_t5 -> (NegInf, PosInf)
+_t6 -> [1, PosInf)
+_t8 -> (NegInf, PosInf)
+_t9 -> [0, 1]
+i -> [0, PosInf)
+
+entry:
+K -> (NegInf, PosInf)
+i -> [0, 0]
+

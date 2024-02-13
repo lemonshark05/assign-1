@@ -1,0 +1,15 @@
+bb1:
+_t1 -> [-1, PosInf)
+x -> [2, PosInf)
+
+bb2:
+_t1 -> [-1, PosInf)
+x -> [3, 3]
+
+bb3:
+_t1 -> [-1, PosInf)
+x -> [5, 5]
+
+entry:
+x -> [2, 2]
+

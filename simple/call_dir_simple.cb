@@ -1,0 +1,12 @@
+// expected: 0
+// print: 10 10
+
+extern print: (int) -> _;
+
+fn foo() -> _ { print(10); return; }
+
+fn main() -> int {
+  foo();
+  foo();
+  return 0;
+}

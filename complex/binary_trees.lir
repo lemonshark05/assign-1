@@ -1,0 +1,345 @@
+struct node {
+  left:&node
+  parent:&node
+  right:&node
+  value:int
+}
+
+struct tree {
+  root:&node
+  size:int
+}
+
+exp2:&(int) -> int
+getBit:&(int, int) -> int
+insert:&(&tree, int, int) -> _
+log2:&(int) -> int
+mod:&(int, int) -> int
+readAndRemove:&(&tree, int) -> int
+
+extern print:(int) -> _
+
+fn exp2(l:int) -> int {
+let _t1:int, _t2:int, _t3:int, n:int
+bb1:
+  _t1 = $cmp gt l 0
+  $branch _t1 bb2 bb3
+
+bb2:
+  _t2 = $arith sub l 1
+  l = $copy _t2
+  _t3 = $arith mul n 2
+  n = $copy _t3
+  $jump bb1
+
+bb3:
+  $ret n
+
+entry:
+  n = $copy 1
+  $jump bb1
+}
+
+fn getBit(n:int, bit:int) -> int {
+let _t1:int, _t2:int, _t3:int, _t4:int, _t5:int, _t6:int, _t7:int
+bb1:
+  _t1 = $cmp gt bit 1
+  $branch _t1 bb2 bb3
+
+bb2:
+  _t2 = $arith div n 2
+  n = $copy _t2
+  _t3 = $arith sub bit 1
+  bit = $copy _t3
+  $jump bb1
+
+bb3:
+  _t4 = $arith div n 2
+  _t5 = $arith mul _t4 2
+  _t6 = $arith sub n _t5
+  _t7 = $cmp neq _t6 0
+  $ret _t7
+
+entry:
+  $jump bb1
+}
+
+fn insert(h:&tree, k:int, v:int) -> _ {
+let _t1:&&node, _t10:&node, _t11:&&node, _t12:&node, _t13:&int, _t14:&int, _t15:int, _t16:int, _t17:int, _t18:&&node, _t19:&node, _t2:&node, _t20:int, _t21:int, _t22:&&node, _t23:&node, _t24:int, _t25:&&node, _t26:&node, _t27:&&node, _t28:&node, _t29:&&node, _t3:int, _t30:&&node, _t31:&node, _t32:&&node, _t33:&node, _t34:int, _t35:&&node, _t36:&node, _t37:&&node, _t38:&node, _t39:&&node, _t4:int, _t40:&&node, _t41:&node, _t42:int, _t43:&int, _t5:&&node, _t6:&node, _t7:&int, _t8:int, _t9:&&node, bits:int, depth:int, next:int, node:&node, parent:&node
+bb1:
+  next = $copy k
+  _t15 = $call_dir log2(next) then bb5
+
+bb10:
+  $branch _t21 bb12 bb13
+
+bb11:
+  _t42 = $arith sub depth 1
+  depth = $copy _t42
+  $jump bb7
+
+bb12:
+  _t22 = $gfp node right
+  _t23 = $load _t22
+  _t24 = $cmp eq _t23 0
+  $branch _t24 bb15 bb14
+
+bb13:
+  _t32 = $gfp node left
+  _t33 = $load _t32
+  _t34 = $cmp eq _t33 0
+  $branch _t34 bb17 bb16
+
+bb14:
+  _t30 = $gfp node right
+  _t31 = $load _t30
+  node = $copy _t31
+  $jump bb11
+
+bb15:
+  _t25 = $gfp node right
+  _t26 = $alloc 1 [_alloc2]
+  $store _t25 _t26
+  _t27 = $gfp node right
+  _t28 = $load _t27
+  _t29 = $gfp _t28 parent
+  $store _t29 node
+  $jump bb14
+
+bb16:
+  _t40 = $gfp node left
+  _t41 = $load _t40
+  node = $copy _t41
+  $jump bb11
+
+bb17:
+  _t35 = $gfp node left
+  _t36 = $alloc 1 [_alloc3]
+  $store _t35 _t36
+  _t37 = $gfp node left
+  _t38 = $load _t37
+  _t39 = $gfp _t38 parent
+  $store _t39 node
+  $jump bb16
+
+bb2:
+  _t4 = $cmp neq k 0
+  $branch _t4 bb4 bb3
+
+bb3:
+  _t9 = $gfp h root
+  _t10 = $alloc 1 [_alloc1]
+  $store _t9 _t10
+  _t11 = $gfp h root
+  _t12 = $load _t11
+  _t13 = $gfp _t12 value
+  $store _t13 v
+  _t14 = $gfp h size
+  $store _t14 1
+  $jump exit
+
+bb4:
+  $call_ext print(99)
+  _t5 = $gfp h root
+  _t6 = $load _t5
+  _t7 = $gfp _t6 value
+  _t8 = $load _t7
+  k = $copy _t8
+  $jump bb3
+
+bb5:
+  depth = $copy _t15
+  _t16 = $call_dir exp2(depth) then bb6
+
+bb6:
+  _t17 = $arith sub next _t16
+  bits = $copy _t17
+  _t18 = $gfp h root
+  _t19 = $load _t18
+  node = $copy _t19
+  $jump bb7
+
+bb7:
+  _t20 = $cmp gt depth 0
+  $branch _t20 bb8 bb9
+
+bb8:
+  _t21 = $call_dir getBit(bits, depth) then bb10
+
+bb9:
+  _t43 = $gfp node value
+  $store _t43 v
+  $jump exit
+
+entry:
+  _t1 = $gfp h root
+  _t2 = $load _t1
+  _t3 = $cmp eq _t2 0
+  $branch _t3 bb2 bb1
+
+exit:
+  $ret 
+}
+
+fn log2(n:int) -> int {
+let _t1:int, _t2:int, _t3:int, l:int
+bb1:
+  _t1 = $cmp gt n 1
+  $branch _t1 bb2 bb3
+
+bb2:
+  _t2 = $arith add l 1
+  l = $copy _t2
+  _t3 = $arith div n 2
+  n = $copy _t3
+  $jump bb1
+
+bb3:
+  $ret l
+
+entry:
+  l = $copy 0
+  $jump bb1
+}
+
+fn main() -> int {
+let _t1:int, _t2:int, _t3:int, _t4:int, _t5:int, _t6:int, _t7:int, h:&tree, i:int
+bb1:
+  _t1 = $cmp lt i 128
+  $branch _t1 bb2 bb3
+
+bb2:
+  _t2 = $arith mul i i
+  $call_dir insert(h, i, _t2) then bb4
+
+bb3:
+  _t4 = $arith sub i 1
+  i = $copy _t4
+  $jump bb5
+
+bb4:
+  _t3 = $arith add i 1
+  i = $copy _t3
+  $jump bb1
+
+bb5:
+  _t5 = $cmp gt i 0
+  $branch _t5 bb6 bb7
+
+bb6:
+  _t6 = $call_dir readAndRemove(h, i) then bb8
+
+bb7:
+  $ret 0
+
+bb8:
+  $call_ext print(_t6)
+  _t7 = $arith sub i 1
+  i = $copy _t7
+  $jump bb5
+
+entry:
+  i = $copy 0
+  h = $alloc 1 [_alloc4]
+  $jump bb1
+}
+
+fn mod(a:int, b:int) -> int {
+let _t1:int, _t2:int, _t3:int
+entry:
+  _t1 = $arith div a b
+  _t2 = $arith mul _t1 b
+  _t3 = $arith sub a _t2
+  $ret _t3
+}
+
+fn readAndRemove(h:&tree, i:int) -> int {
+let _ret32:int, _t1:int, _t10:&&node, _t11:&node, _t12:int, _t13:&&node, _t14:&node, _t15:int, _t16:&&node, _t17:&int, _t18:int, _t19:&&node, _t2:int, _t20:&node, _t21:&&node, _t22:&node, _t23:int, _t24:&&node, _t25:&node, _t26:&&node, _t27:&&node, _t28:&node, _t29:&&node, _t3:int, _t30:&int, _t31:int, _t4:&&node, _t5:&node, _t6:int, _t7:int, _t8:&&node, _t9:&node, bits:int, depth:int, last:&node, next:int
+bb1:
+  depth = $copy _t1
+  _t2 = $call_dir exp2(depth) then bb2
+
+bb10:
+  _t19 = $gfp last parent
+  _t20 = $load _t19
+  _t21 = $gfp _t20 left
+  _t22 = $load _t21
+  _t23 = $cmp eq _t22 last
+  $branch _t23 bb13 bb14
+
+bb11:
+  _t16 = $gfp h root
+  $store _t16 0
+  _t17 = $gfp last value
+  _t18 = $load _t17
+  _ret32 = $copy _t18
+  $jump exit
+
+bb12:
+  _t30 = $gfp last value
+  _t31 = $load _t30
+  _ret32 = $copy _t31
+  $jump exit
+
+bb13:
+  _t24 = $gfp last parent
+  _t25 = $load _t24
+  _t26 = $gfp _t25 left
+  $store _t26 0
+  $jump bb12
+
+bb14:
+  _t27 = $gfp last parent
+  _t28 = $load _t27
+  _t29 = $gfp _t28 right
+  $store _t29 0
+  $jump bb12
+
+bb2:
+  _t3 = $arith sub i _t2
+  bits = $copy _t3
+  _t4 = $gfp h root
+  _t5 = $load _t4
+  last = $copy _t5
+  $jump bb3
+
+bb3:
+  _t6 = $cmp gt depth 0
+  $branch _t6 bb4 bb5
+
+bb4:
+  _t7 = $call_dir getBit(bits, depth) then bb6
+
+bb5:
+  _t13 = $gfp h root
+  _t14 = $load _t13
+  _t15 = $cmp eq last _t14
+  $branch _t15 bb11 bb10
+
+bb6:
+  $branch _t7 bb8 bb9
+
+bb7:
+  _t12 = $arith sub depth 1
+  depth = $copy _t12
+  $jump bb3
+
+bb8:
+  _t8 = $gfp last right
+  _t9 = $load _t8
+  last = $copy _t9
+  $jump bb7
+
+bb9:
+  _t10 = $gfp last left
+  _t11 = $load _t10
+  last = $copy _t11
+  $jump bb7
+
+entry:
+  _t1 = $call_dir log2(i) then bb1
+
+exit:
+  $ret _ret32
+}
+

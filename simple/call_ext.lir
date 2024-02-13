@@ -1,0 +1,8 @@
+extern print:(int) -> _
+
+fn main() -> int {
+entry:
+  $call_ext print(42)
+  $ret 0
+}
+

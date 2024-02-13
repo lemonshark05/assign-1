@@ -1,0 +1,9 @@
+// expected: 0
+// print: 42
+
+extern print: (int) -> _;
+
+fn main() -> int {
+  print(42);
+  return 0;
+}

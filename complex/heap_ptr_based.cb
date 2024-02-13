@@ -1,0 +1,220 @@
+// binary heaps using pointers
+
+extern print: (int) -> _;
+
+struct node {
+    left: &node,
+    right: &node,
+    parent: &node,
+    value: int
+}
+
+struct heap {
+    root: &node,
+    size: int
+}
+
+// precondition: n > 0
+fn log2(n: int) -> int {
+    let l: int = 0;
+
+    while n > 1 {
+        l = l + 1;
+        n = n / 2;
+    }
+
+    return l;
+}
+
+// precondition: l >= 0
+fn exp2(l: int) -> int {
+    let n: int = 1;
+
+    while l > 0 {
+        l = l - 1;
+        n = n * 2;
+    }
+
+    return n;
+}
+
+fn mod(a: int, b: int) -> int {
+    return a - (a / b) * b;
+}
+
+fn getBit(n: int, bit: int) -> int {
+    while bit > 1 {
+        n = n / 2;
+        bit = bit - 1;
+    }
+
+    return n - ((n / 2) * 2) != 0;
+}
+
+fn emptyHeap() -> &heap {
+    let h: &heap;
+    h = new heap;
+    return h;
+}
+
+fn insert(h: &heap, x: int) -> _ {
+    let parent: &node, node: &node;
+    let next: int, depth: int, bits: int;
+
+    if h.root == nil {
+        h.root = new node;
+        h.root.value = x;
+        h.size = 1;
+        return;
+    }
+
+    next = h.size + 1;
+    depth = log2(next);
+    bits = next - exp2(depth);
+
+    parent = h.root;
+    
+    while depth > 1 {
+        if getBit(bits, depth) {
+            parent = parent.right;
+        } else {
+            parent = parent.left;
+        }
+        depth = depth - 1;
+    }
+
+    if getBit(bits, depth) == 0 {
+        parent.left = new node;
+        node = parent.left;
+    } else {
+        parent.right = new node;
+        node = parent.right;
+    }
+
+    node.parent = parent;
+    node.value = x;
+
+    percolateUp(node);
+
+    h.size = h.size + 1;
+    
+    return;
+}
+
+fn percolateUp(current: &node) -> _ {
+    let parent: &node = current.parent, tmp: int;
+
+    while (current != nil) * (current.parent != nil) * (current.parent.value > current.value) {
+        tmp = current.value;
+        current.value = current.parent.value;
+        current.parent.value = tmp;
+        current = current.parent;
+    }
+
+    return;
+}
+
+fn percolateDown(current: &node) -> _ {
+    let parent: &node = current.parent, tmp: int, tmpN: &node;
+
+    if current.left == nil {
+        return;
+    }
+
+    if current.right == nil {
+        if current.value > current.left.value {
+            tmp = current.value;
+            current.value = current.left.value;
+            current.left.value = tmp;
+            percolateDown(current);
+        }
+        return;
+    }
+
+    // check if we're already done
+    if current.value <= current.left.value and current.value <= current.right.value {
+        return;
+    }
+
+    if current.left.value < current.right.value {
+    // we can safely percolate down to left
+    tmp = current.value;
+    current.value = current.left.value;
+    current.left.value = tmp;
+
+    percolateDown(current.left);
+    } else {
+    // we can safely percolate down to right
+    tmp = current.value;
+    current.value = current.right.value;
+    current.right.value = tmp;
+
+    percolateDown(current.right);
+    }
+
+    return;
+}
+
+fn findMin(h: &heap) -> int {
+    return h.root.value;
+}
+
+fn popMin(h: &heap) -> int {
+    let min: int = h.root.value, last: &node;
+    let next: int, depth: int, bits: int;
+
+
+    if h.size == 1 {
+        h.root = nil;
+        h.size = 0;
+        return min;
+    }
+
+    // find the last node
+    depth = log2(h.size);
+    bits = h.size - exp2(depth);
+
+    last = h.root;
+
+    while depth > 0 {
+        if getBit(bits, depth) {
+            last = last.right;
+        } else {
+            last = last.left;
+        }
+        depth = depth - 1;
+    }
+
+
+    h.size = h.size - 1;
+
+    if last.parent.left == last {
+        last.parent.left = nil;
+    } else {
+        last.parent.right = nil;
+    }
+
+    h.root.value = last.value;
+
+    percolateDown(h.root);
+
+    return min;
+}
+
+let K: int;
+
+fn main() -> int {
+    let i: int = 0, h: &heap = emptyHeap();
+    K = 107;
+
+    while i < K / 2 {
+        insert(h, mod(i * i, K));
+        i = i + 1;
+    }
+
+    while h.size > 0 {
+        print(popMin(h));
+    }
+
+    return 0;
+}

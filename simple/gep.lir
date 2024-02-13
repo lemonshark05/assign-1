@@ -1,0 +1,11 @@
+fn main() -> int {
+let _t1:&int, _t2:&int, _t3:int, x:&int
+entry:
+  x = $alloc 5 [_alloc1]
+  _t1 = $gep x 3
+  $store _t1 4
+  _t2 = $gep x 3
+  _t3 = $load _t2
+  $ret _t3
+}
+

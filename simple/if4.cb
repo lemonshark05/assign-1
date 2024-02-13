@@ -1,0 +1,24 @@
+
+fn foo(x: int, y: int) -> int {
+  if x >= 0 {
+    if y < 0 {
+      y = x + 5;
+    } else {
+      y = 4;
+    }
+    x = x + 1;
+  } else {
+    if y == 0 {
+      x = 9;
+    } else {
+      y = 3;
+    }
+    y = y - 1;
+    x = x - y;
+  }
+  return x * 10 + y;
+}
+
+fn main() -> int {
+    return foo(0, 0);
+}

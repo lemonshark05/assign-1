@@ -1,0 +1,1 @@
+{"structs":{},"globals":[],"functions":{"main":{"id":"main","ret_ty":"Int","params":[],"locals":[{"name":"_t1","typ":"Int","scope":"main"}],"body":{"entry":{"id":"entry","insts":[{"Arith":{"lhs":{"name":"_t1","typ":"Int","scope":"main"},"aop":"Divide","op1":{"CInt":30},"op2":{"CInt":6}}}],"term":{"Ret":{"Var":{"name":"_t1","typ":"Int","scope":"main"}}}}}}},"externs":{}}

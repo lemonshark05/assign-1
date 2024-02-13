@@ -1,0 +1,150 @@
+// some object-oriented programming in CFlat
+
+extern printChar: (int) -> _;
+extern print: (int) -> _;
+
+fn mkCanvas(x: int, y: int) -> &canvas {
+    let data: &&int, i: int = 0, canvas: &canvas;
+    data = new &int y;
+
+    while i < y {
+        data[i] = new int x;
+        i = i + 1;
+    }
+
+    canvas = new canvas;
+    canvas.data = data;
+    canvas.height = y;
+    canvas.width = x;
+    return canvas;
+}
+
+struct canvas {
+    data: &&int,
+    height: int,
+    width: int
+}
+
+struct shape {
+    // method for drawing this shape at specific coordinates
+    draw: &(&canvas, &shape) -> _,
+    x: int,
+    y: int,
+    // other data. valid only for some shapes
+    r: int,
+    h: int,
+    w: int
+}
+
+fn drawCircle(canvas: &canvas, circle: &shape) -> _ {
+    let r: int = circle.r, i: int = -r, j: int;
+
+    while i <= r and i + circle.y < canvas.height {
+        if i + circle.y >= 0 {
+            j = -r;
+            while j <= r and j + circle.x < canvas.width {
+                if j + circle.x >= 0 {
+                    canvas.data[i + circle.y][j + circle.x] = i * i + j * j <= r * r;
+                }
+                j = j + 1;
+            }
+        }
+        i = i + 1;
+    }
+    return;
+}
+
+fn drawRectangle(canvas: &canvas, rect: &shape) -> _ {
+    let i: int = 0, j: int = 0;
+
+    while i < rect.h and i + rect.y < canvas.height {
+        j = 0;
+        while j < rect.w and j + rect.x < canvas.width {
+            canvas.data[i + rect.y][j + rect.x] = 1;
+            j = j + 1;
+        }
+        i = i + 1;
+    }
+    return;
+}
+
+fn circle(x: int, y: int, r: int) -> &shape {
+    let circle: &shape;
+    circle = new shape;
+    circle.x = x;
+    circle.y = y;
+    circle.r = r;
+    circle.draw = drawCircle;
+    return circle;
+}
+
+fn rectangle(x: int, y: int, h: int, w: int) -> &shape {
+    let rect: &shape;
+    rect = new shape;
+    rect.x = x;
+    rect.y = y;
+    rect.h = h;
+    rect.w = w;
+    rect.draw = drawRectangle;
+    return rect;
+}
+
+fn printCanvas(canvas: &canvas) -> _ {
+    let i: int = 0, j: int = 0;
+
+    printChar(43);
+    j = 0;
+    while j < canvas.width {
+        printChar(45);
+        j = j + 1;
+    }
+    printChar(43);
+    printChar(10);
+    while i < canvas.height {
+        j = 0;
+        printChar(124);
+        while j < canvas.width {
+            if canvas.data[i][j] {
+                printChar(46);
+            } else {
+                printChar(32);
+            }
+            j = j + 1;
+        }
+        printChar(124);
+        printChar(10);
+        i = i + 1;
+    }
+    printChar(43);
+    j = 0;
+    while j < canvas.width {
+        printChar(45);
+        j = j + 1;
+    }
+    printChar(43);
+    printChar(10);
+
+    return;
+}
+
+fn main() -> int {
+    let shapes: &&shape, i: int = 0, canvas: &canvas = mkCanvas(100, 50);
+
+    printChar(10);
+    shapes = new &shape 6;
+    shapes[0] = circle(0, 0, 10);
+    shapes[1] = circle(100, 0, 10);
+    shapes[2] = circle(100, 50, 10);
+    shapes[3] = circle(0, 50, 10);
+    shapes[4] = rectangle(20, 20, 10, 20);
+    shapes[5] = rectangle(60, 20, 10, 20);
+
+    while 5 >= i {
+        shapes[i].draw(canvas, shapes[i]);
+        i = i + 1;
+    }
+
+    printCanvas(canvas);
+    
+    return 0;
+}
