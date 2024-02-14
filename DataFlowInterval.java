@@ -23,10 +23,10 @@ public class DataFlowInterval {
     static Set<String> globalVariables = new HashSet<>();
 
     public static void dataFlow(String filePath) {
-        List<String> varOrder = new LinkedList<>();
-        Map<String, List<Operation>> basicBlocks = new HashMap<>();
-        Map<String, VariableState> variableStates = new HashMap<>();
+        Map<String, List<Operation>> basicBlocks = new TreeMap<>();
+        Map<String, VariableState> variableStates = new TreeMap<>();
         Map<String, List<String>> blockSuccessors = new HashMap<>();
+        Map<String, TreeSet<String>> blockVars = new HashMap<>();
         Queue<Operation> worklist = new LinkedList<>();
         Map<String, VariableState> preStates = new HashMap<>();
         Map<String, VariableState> postStates = new HashMap<>();
@@ -34,6 +34,7 @@ public class DataFlowInterval {
         parseLirFile(filePath, basicBlocks, variableStates, worklist, blockSuccessors);
         // Initialize all blocks to bottom (⊥)
         basicBlocks.keySet().forEach(blockName -> {
+            blockVars.put(blockName, new TreeSet<>());
             preStates.put(blockName, new VariableState());
             postStates.put(blockName, new VariableState());
         });
@@ -43,7 +44,7 @@ public class DataFlowInterval {
             String block = operation.block;
             VariableState preState = computePreState(block, preStates, postStates, blockSuccessors);
             VariableState oldPostState = postStates.get(block) != null ? postStates.get(block).clone() : new VariableState();
-            VariableState newPostState = analyzeInstruction(varOrder, operation, preState, variableStates);
+            VariableState newPostState = analyzeInstruction(operation, preState, variableStates, blockVars);
 
             if (!newPostState.equals(oldPostState)) {
                 List<String> successors = blockSuccessors.getOrDefault(block, new ArrayList<>());
@@ -57,7 +58,7 @@ public class DataFlowInterval {
                 }
             }
         }
-        printAnalysisResults(varOrder, basicBlocks, variableStates);
+        printAnalysisResults(basicBlocks, variableStates, blockVars);
     }
 
     private static VariableState computePreState(String block, Map<String, VariableState> preStates, Map<String, VariableState> postStates, Map<String, List<String>> blockPredecessors) {
@@ -79,14 +80,22 @@ public class DataFlowInterval {
         return preState;
     }
 
-    private static VariableState analyzeInstruction(List<String> varOrder, Operation operation, VariableState currentState, Map<String, VariableState> variableStates) {
+    private static VariableState analyzeInstruction(Operation operation, VariableState currentState, Map<String, VariableState> variableStates, Map<String, TreeSet<String>> blockVars) {
         String instruction = operation.instruction;
         Pattern operationPattern = Pattern.compile("\\$(store|load|alloc|cmp|gep|copy|call_ext|addrof|arith|gfp|branch|jump|ret|call_dir|call_idr)");
         Matcher matcher = operationPattern.matcher(instruction);
         String[] parts = instruction.split(" ");
         String leftVar = parts[0];
+        TreeSet<String> varsInBlock = blockVars.get(operation.block);
+
         if (matcher.find()) {
             String opera = matcher.group(1);
+            for (int i = 1; i < parts.length; i++) {
+                String part = parts[i];
+                if (variableStates.containsKey(part) && variableStates.get(part).isInt()) {
+                    varsInBlock.add(part);
+                }
+            }
             switch (opera) {
                 case "store":
                     String pointerVar = parts[1];
@@ -105,9 +114,6 @@ public class DataFlowInterval {
                             String pointedVar = variableStates.get(pointerVar).getPointsTo();
                             if (addressTakenVariables.contains(pointedVar)) {
                                 variableStates.get(pointedVar).weakUpdate(valueState);
-                                if (!varOrder.contains(pointedVar)) {
-                                    varOrder.add(pointedVar);
-                                }
                             }
                         }
                     }
@@ -117,16 +123,14 @@ public class DataFlowInterval {
                         VariableState loadedState = variableStates.get(leftVar);
                         currentState.merge(loadedState);
                         loadedState.markAsTop();
-                        varOrder.remove(leftVar);
-                        varOrder.add(leftVar);
                     }
                     break;
                 case "alloc":
                     break;
                 case "cmp":
-                    handleCmp(parts, leftVar, varOrder, variableStates);
+                    handleCmp(parts, leftVar, variableStates);
                 case "arith":
-                    handleArith(parts, leftVar, varOrder, variableStates);
+                    handleArith(parts, leftVar, variableStates);
                     break;
                 case "gep":
                     break;
@@ -140,12 +144,8 @@ public class DataFlowInterval {
                                 updateVar.setPointsTo(copiedState.getPointsTo());
                             } else if (copiedState.isInt() && copiedState.hasConstantValue()) {
                                 updateVar.setConstantValue(copiedState.getConstantValue());
-                                varOrder.remove(leftVar);
-                                varOrder.add(leftVar);
                             } else {
                                 updateVar.markAsTop();
-                                varOrder.remove(leftVar);
-                                varOrder.add(leftVar);
                             }
                         } else {
                             try {
@@ -154,8 +154,6 @@ public class DataFlowInterval {
                             } catch (NumberFormatException e) {
                                 updateVar.markAsTop();
                             }
-                            varOrder.remove(leftVar);
-                            varOrder.add(leftVar);
                         }
                     }
                     break;
@@ -184,8 +182,6 @@ public class DataFlowInterval {
                         newTopState.markAsTop();
                         variableStates.put(leftVar, newTopState);
                     }
-                    varOrder.remove(leftVar);
-                    varOrder.add(leftVar);
                     break;
                 case "branch":
                 case "jump":
@@ -198,7 +194,7 @@ public class DataFlowInterval {
         }
         return currentState;
     }
-    private static void handleArith(String[] parts, String leftVar, List<String> varOrder, Map<String, VariableState> variableStates) {
+    private static void handleArith(String[] parts, String leftVar, Map<String, VariableState> variableStates) {
         if (parts.length < 5) return;
 
         String operation = parts[3];
@@ -247,12 +243,9 @@ public class DataFlowInterval {
         } else {
 
         }
-
-        varOrder.remove(leftVar);
-        varOrder.add(leftVar);
     }
 
-    private static void handleCmp(String[] parts, String leftVar, List<String> varOrder, Map<String, VariableState> variableStates) {
+    private static void handleCmp(String[] parts, String leftVar, Map<String, VariableState> variableStates) {
         if (parts.length < 5) return;
 
         String operation = parts[3];
@@ -285,15 +278,11 @@ public class DataFlowInterval {
             result = performComparison(operation, value1, value2);
             leftState.markAsTop();
         }
-
-        varOrder.remove(leftVar);
-        varOrder.add(leftVar);
     }
 
     private static void parseLirFile(String filePath, Map<String, List<Operation>> basicBlocks, Map<String, VariableState> variableStates, Queue<Operation> worklist, Map<String, List<String>> blockSuccessors) {
         try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
             String currentBlock = null;
-            List<String> instructions = new ArrayList<>();
             boolean isFunction = false;
 
             String line;
@@ -395,22 +384,17 @@ public class DataFlowInterval {
         return "";
     }
 
-    private static void printAnalysisResults(List<String> varOrder, Map<String, List<Operation>> basicBlocks, Map<String, VariableState> variableStates) {
+    private static void printAnalysisResults(Map<String, List<Operation>> basicBlocks, Map<String, VariableState> variableStates, Map<String, TreeSet<String>> blockVars) {
         // Sort the basic block names alphabetically
-        List<String> sortedBlockNames = new ArrayList<>(basicBlocks.keySet());
-        Collections.sort(sortedBlockNames);
-        basicBlocks.forEach((blockName, instructions) -> {
+        for (String blockName : basicBlocks.keySet()) {
             System.out.println(blockName + ":");
-            for (String varName : varOrder) {
+            TreeSet<String> varsInBlock = blockVars.getOrDefault(blockName, new TreeSet<>());
+            for (String varName : varsInBlock) {
                 VariableState state = variableStates.get(varName);
-                if (state.isTop) {
-                    System.out.println(varName + " -> Top");
-                } else if (state.hasConstantValue()) {
-                    System.out.println(varName + " -> "+state.constantValue);
-                }
+                System.out.println(varName + " -> " + (state.isTop() ? "Top" : state.getConstantValue()));
             }
             System.out.println();
-        });
+        }
     }
 
     public static void main(String[] args) {
