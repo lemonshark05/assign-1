@@ -20,5 +20,9 @@ for file in "$TEST_DIR"/*.lir; do
     ./run-constants-analysis.sh "$file" "$json_file" > "$output_stats"
     diff -wp "$output_stats" "$stats_file" > "$diff_output"
 
-    echo "Processed $file"
+    if [ -s "$diff_output" ]; then
+        echo "Processed $file - NOT PASS >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+    else
+        echo "Processed $file - pass"
+    fi
 done
