@@ -21,6 +21,13 @@ class VariableState{
         }
     }
 
+    void markAsBottom() {
+        if(this.pointsTo == null){
+            this.isTop = false;
+            this.constantValue = null;
+        }
+    }
+
     public void setPointsTo(String pointsTo) {
         this.pointsTo = pointsTo;
         isTop = false;
@@ -35,6 +42,13 @@ class VariableState{
 
     public boolean isTop() {
         return isTop;
+    }
+    public boolean isBottom(){
+        if(this.isTop) return false;
+        if(this.isInt() && !this.hasConstantValue()){
+            return true;
+        }
+        return false;
     }
 
     public Integer getConstantValue() {
@@ -78,6 +92,7 @@ class VariableState{
     }
 
     public VariableState join(VariableState other) {
+
         //should change after worklist
         if (this.isTop || other.isTop) {
             this.markAsTop();
