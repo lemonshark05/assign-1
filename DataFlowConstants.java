@@ -1,3 +1,4 @@
+import javax.swing.*;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -20,55 +21,81 @@ public class DataFlowConstants {
     static Set<String> addressTakenVariables = new HashSet<>();
     static Set<String> globalVariables = new HashSet<>();
 
-    public static void dataFlow(String filePath) {
-        Map<String, List<Operation>> basicBlocks = new TreeMap<>();
-        Map<String, VariableState> variableStates = new TreeMap<>();
-        Map<String, List<String>> blockSuccessors = new HashMap<>();
-        Map<String, TreeMap<String, String>> blockVars = new HashMap<>();
-        Set<String> processedBlocks = new HashSet<>();
-        Queue<String> worklist = new LinkedList<>();
-        Map<String, VariableState> preStates = new HashMap<>();
-        Map<String, VariableState> postStates = new HashMap<>();
+    static Map<String, List<Operation>> basicBlocks = new HashMap<>();
+    static Map<String, List<String>> blockSuccessors = new HashMap<>();
+    static Map<String, Map<String, VariableState>> preStates = new HashMap<>();
+    static Map<String, Map<String, VariableState>> postStates = new HashMap<>();
 
-        parseLirFile(filePath, basicBlocks, variableStates, blockSuccessors, blockVars);
-        for (String blockName : basicBlocks.keySet()) {
-            if (!preStates.containsKey(blockName)) {
-                preStates.put(blockName, new VariableState());
+    static Map<String, TreeMap<String, String>> blockVars = new HashMap<>();
+    static Map<String, VariableState> variableStates = new TreeMap<>();
+    static Set<String> processedBlocks = new HashSet<>();
+
+    static Queue<String> worklist = new LinkedList<>();
+
+
+    public static void dataFlow(String filePath) {
+        parseLirFile(filePath);
+        for (String blockName : blockVars.keySet()) {
+            Map<String, VariableState> initialStates = new HashMap<>();
+            TreeMap<String, String> varsInBlock = blockVars.get(blockName);
+            for (Map.Entry<String, String> entry : varsInBlock.entrySet()) {
+                String varName = entry.getKey();
+                initialStates.put(varName, new VariableState());
             }
+            preStates.put(blockName, initialStates);
         }
 
         worklist.add("entry");
         processedBlocks.add("entry");
-        preStates.put("entry", new VariableState());
 
         while (!worklist.isEmpty()) {
             String block = worklist.poll();
-            VariableState preState = preStates.get(block);
-            VariableState postState = analyzeBlock(processedBlocks, worklist, basicBlocks.get(block), preState, variableStates, blockVars);
+            Map<String, VariableState> preState = preStates.get(block);
+            Map<String, VariableState> postState = analyzeBlock(block, preState, processedBlocks);
             postStates.put(block, postState);
 
-            for (String successor : blockSuccessors.getOrDefault(block, new ArrayList<>())) {
-                VariableState successorPreState = preStates.getOrDefault(successor, new VariableState());
-                VariableState updatedPreState = successorPreState.join(postState);
-                if (!updatedPreState.equals(successorPreState)) {
-                    preStates.put(successor, updatedPreState);
-                    worklist.add(successor);
-                    processedBlocks.add(successor);
+            for (String successor : blockSuccessors.getOrDefault(block, new LinkedList<>())) {
+                if(successor.equals("bb2")){
+                    System.out.println("get in bb2");
+                }
+                Map<String, VariableState> successorPreState = preStates.getOrDefault(successor, new HashMap<>());
+                Map<String, VariableState> joinedState = joinMaps(successorPreState, postState);
+                if (!joinedState.equals(successorPreState)) {
+                    preStates.put(successor, joinedState);
+                    if (!worklist.contains(successor)) {
+                        worklist.add(successor);
+                    }
                 }
             }
         }
         printAnalysisResults(processedBlocks, variableStates, blockVars);
     }
 
-    private static VariableState analyzeBlock(Set<String> processedBlocks, Queue<String> worklist, List<Operation> operations, VariableState preState, Map<String, VariableState> variableStates, Map<String, TreeMap<String, String>> blockVars) {
-        VariableState currentState = preState.clone();
-        for (Operation operation : operations) {
-            currentState = analyzeInstruction(processedBlocks ,worklist, operation, currentState, variableStates, blockVars);
+    private static void printVariableStates(Map<String, VariableState> states) {
+        if (states == null) {
+            System.out.println("No variable states to display.");
+            return;
         }
-        return currentState;
+        states.forEach((varName, varState) -> {
+            System.out.println(varName + " -> " + varState);
+        });
     }
 
-    private static VariableState analyzeInstruction(Set<String> processedBlocks, Queue<String> worklist, Operation operation, VariableState currentState, Map<String, VariableState> variableStates, Map<String, TreeMap<String, String>> blockVars) {
+    private static Map<String, VariableState> analyzeBlock(String block, Map<String, VariableState> preState, Set<String> processedBlocks) {
+        Map<String, VariableState> postState = new HashMap<>(preState);
+        for (Operation operation : basicBlocks.get(block)) {
+            analyzeInstruction(postState, processedBlocks ,operation);
+        }
+        return postState;
+    }
+
+    private static Map<String, VariableState> joinMaps(Map<String, VariableState> map1, Map<String, VariableState> map2) {
+        Map<String, VariableState> result = new HashMap<>(map1);
+        map2.forEach((varName, varState) -> result.merge(varName, varState, (state1, state2) -> state1.join(state2)));
+        return result;
+    }
+
+    private static void analyzeInstruction(Map<String, VariableState> postState, Set<String> processedBlocks, Operation operation) {
         String instruction = operation.instruction;
         Pattern operationPattern = Pattern.compile("\\$(store|load|alloc|cmp|gep|copy|call_ext|addrof|arith|gfp|ret|call_dir|call_idr|jump|branch)");
         Matcher matcher = operationPattern.matcher(instruction);
@@ -100,7 +127,6 @@ public class DataFlowConstants {
                 case "load":
                     if (variableStates.containsKey(leftVar)) {
                         VariableState loadedState = variableStates.get(leftVar);
-                        currentState.merge(loadedState);
                         loadedState.markAsTop();
                     }
                     break;
@@ -148,7 +174,6 @@ public class DataFlowConstants {
                     }
                     if (instruction.contains("then")) {
                         String targetBlock = instruction.substring(instruction.lastIndexOf("then") + 5).trim();
-                        worklist.add(targetBlock);
                         processedBlocks.add(targetBlock);
                         updateBlockVars(operation.block, variableStates, blockVars);
                         propagateVars(targetBlock, blockVars, operation.block);
@@ -176,50 +201,50 @@ public class DataFlowConstants {
                     break;
                 case "jump":
                     String targetBlockJump = extractTargetBlock(instruction);
-                    if (!worklist.contains(targetBlockJump)) {
-                        worklist.add(targetBlockJump);
-                        processedBlocks.add(targetBlockJump);
-                        updateBlockVars(operation.block, variableStates, blockVars);
-                        propagateVars(targetBlockJump, blockVars, operation.block);
-                    }
+                    processedBlocks.add(targetBlockJump);
+                    worklist.add(targetBlockJump);
+                    updateBlockVars(operation.block, variableStates, blockVars);
+                    propagateVars(targetBlockJump, blockVars, operation.block);
                     break;
                 case "branch":
                     String condition = parts[1];
                     String trueTarget = parts[2];
                     String falseTarget = parts[3];
-                    updateBlockVars(operation.block, variableStates, blockVars);
                     try {
                         int conValue = Integer.parseInt(condition);
                         if (conValue != 0) {
-                            worklist.add(trueTarget);
                             processedBlocks.add(trueTarget);
+                            worklist.add(trueTarget);
                             propagateVars(trueTarget, blockVars, operation.block);
                         } else{
-                            worklist.add(falseTarget);
                             processedBlocks.add(falseTarget);
+                            worklist.add(falseTarget);
                             propagateVars(falseTarget, blockVars, operation.block);
                         }
                     } catch (NumberFormatException e) {
                         VariableState conditionVar = variableStates.get(condition);
                         if(conditionVar != null) {
-                            if (conditionVar.hasConstantValue() && conditionVar.getConstantValue() != 0) {
-                                worklist.add(trueTarget);
+                            if (conditionVar.isBottom()) {
+                                break;
+                            } else if(conditionVar.hasConstantValue() && conditionVar.getConstantValue() != 0) {
                                 processedBlocks.add(trueTarget);
+                                worklist.add(trueTarget);
                                 propagateVars(trueTarget, blockVars, operation.block);
                             } else if (conditionVar.hasConstantValue() && conditionVar.getConstantValue() == 0) {
-                                worklist.add(falseTarget);
                                 processedBlocks.add(falseTarget);
+                                worklist.add(falseTarget);
                                 propagateVars(falseTarget, blockVars, operation.block);
                             } else {
-                                worklist.add(trueTarget);
                                 processedBlocks.add(trueTarget);
-                                propagateVars(trueTarget, blockVars, operation.block);
-                                worklist.add(falseTarget);
                                 processedBlocks.add(falseTarget);
+                                worklist.add(trueTarget);
+                                worklist.add(falseTarget);
+                                propagateVars(trueTarget, blockVars, operation.block);
                                 propagateVars(falseTarget, blockVars, operation.block);
                             }
                         }
                     }
+                    updateBlockVars(operation.block, variableStates, blockVars);
                     break;
                 case "ret":
                     updateBlockVars(operation.block, variableStates, blockVars);
@@ -228,7 +253,10 @@ public class DataFlowConstants {
                     break;
             }
         }
-        return currentState;
+        VariableState currentState = variableStates.get(leftVar);
+        if(currentState!=null && currentState.isInt()){
+            postState.put(leftVar, currentState);
+        }
     }
 
     private static void updateBlockVars(String blockName, Map<String, VariableState> variableStates, Map<String, TreeMap<String, String>> blockVars) {
@@ -294,7 +322,7 @@ public class DataFlowConstants {
                 if (result != null) {
                     leftState.setConstantValue(result);
                 } else {
-                    leftState.markAsTop();
+                    leftState.markAsBottom();
                 }
             }
         } catch (Exception e) {
@@ -305,65 +333,37 @@ public class DataFlowConstants {
     private static void handleCmp(String[] parts, String leftVar, Map<String, VariableState> variableStates) {
         if (parts.length < 5) return;
 
+        VariableState leftState = variableStates.get(leftVar);
         String operation = parts[3];
         String operand1 = parts[4];
         String operand2 = parts[5];
 
-        boolean result = false;
-        boolean isTop = false;
+        VariableState state1 = getAbstractValue(operand1, variableStates);
+        VariableState state2 = getAbstractValue(operand2, variableStates);
 
-        Integer value1 = null, value2 = null;
-        VariableState operand1State = null, operand2State = null;
+        if (state1.isBottom() || state2.isBottom()){
+            leftState.markAsBottom();
+            return;
+        }
 
-        try {
-            value1 = Integer.parseInt(operand1);
-        } catch (NumberFormatException e) {
-            operand1State = variableStates.get(operand1);
-            if(operand1State!=null){
-                if(operand1State.isTop){
-                    isTop = true;
-                }else if(operand1State.hasConstantValue()){
-                    value1 = operand1State.getConstantValue();
-                }else if(!operand1State.isInt()){
-                    //pointer ->T
-                    isTop = true;
-                }else{
-                    isTop = false;
-                }
-            }
+        if (state1.isTop() || state2.isTop() || state1.pointsTo != null || state2.pointsTo != null ) {
+            leftState.markAsTop();
+            return;
         }
 
         try {
-            value2 = Integer.parseInt(operand2);
-        } catch (NumberFormatException e) {
-            operand2State = variableStates.get(operand2);
-            if(operand2State!=null){
-                if(operand2State.isTop){
-                    isTop = true;
-                }else if(operand2State.hasConstantValue()){
-                    value2 = operand2State.getConstantValue();
-                }else if(!operand1State.isInt()){
-                    //pointer ->T
-                    isTop = true;
-                }else{
-                    isTop = false;
-                }
+            Integer value1 = state1.hasConstantValue() ? state1.getConstantValue() : null;
+            Integer value2 = state2.hasConstantValue() ? state2.getConstantValue() : null;
+            if (value1 != null && value2 != null) {
+                boolean result = performComparison(operation, value1, value2);
+                leftState.markAsTop();
             }
-        }
-
-        VariableState leftState = variableStates.get(leftVar);
-
-        if (isTop) {
-            leftState.markAsTop();
-        } else if (value1 != null && value2 != null) {
-            result = performComparison(operation, value1, value2);
-            leftState.markAsTop();
-        } else if (operand1State !=null && operand1State.hasConstantValue() && operand2State !=null && operand2State.hasConstantValue()){
-            leftState.markAsTop();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
-    private static void parseLirFile(String filePath, Map<String, List<Operation>> basicBlocks, Map<String, VariableState> variableStates, Map<String, List<String>> blockSuccessors, Map<String, TreeMap<String, String>> blockVars) {
+    private static void parseLirFile(String filePath) {
         try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
             String currentBlock = null;
             boolean isMainFunction = false;
@@ -373,7 +373,7 @@ public class DataFlowConstants {
                 line = line.trim();
 
                 if(line.length() == 0) continue;
-                if (line.startsWith("fn main()")) {
+                if (line.startsWith("fn main")) {
                     isMainFunction = true;
                 } else if (isMainFunction && line.startsWith("}")) {
                     isMainFunction = false;
@@ -394,8 +394,10 @@ public class DataFlowConstants {
                             VariableState newState = new VariableState();
                             if (type.startsWith("&int")) {
                                 newState.setPointsTo(type.substring(1));
-                            }else if(type.equals("int")){
+                            }else if (type.equals("int")) {
                                 newState.setInt(true);
+                            }else if (type.startsWith("&")) {
+                                newState.setPointsTo(type.substring(1));
                             }
                             globalVariables.add(varName);
                             variableStates.put(varName, newState);
@@ -499,7 +501,7 @@ public class DataFlowConstants {
             for (Map.Entry<String, String> entry : varsInBlock.entrySet()) {
                 String varName = entry.getKey();
                 String varValue = entry.getValue();
-                if(!varValue.equals("null")) {
+                if(!varValue.equals("null") && varValue.length() != 0) {
                     System.out.println(varName + " -> " + varValue);
                 }
             }

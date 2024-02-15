@@ -76,6 +76,12 @@ for each operator, where `c1` and `c2` represent integer constants).
          ⊥ |   |    |
         c1 |   |    |
          ⊤ |   |    |
+
+add      |  ⊥  |  c2 |  ⊤
+---------+-----+-----+---
+   ⊥     |  ⊥  |  ⊥  |  ⊥
+   c1    |  ⊥  | c1+c2|  ⊤
+   ⊤     |  ⊥  |  ⊤  |  ⊤
 ```
 
 ## PART 2: Integer Interval Analysis (aka Range Analysis)

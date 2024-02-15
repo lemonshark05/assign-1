@@ -1,3 +1,4 @@
+import javax.swing.*;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -187,7 +188,6 @@ public class DataFlowInterval {
                     String condition = parts[1];
                     String trueTarget = parts[2];
                     String falseTarget = parts[3];
-                    updateBlockVars(operation.block, variableStates, blockVars);
                     try {
                         int conValue = Integer.parseInt(condition);
                         if (conValue != 0) {
@@ -202,7 +202,9 @@ public class DataFlowInterval {
                     } catch (NumberFormatException e) {
                         VariableState conditionVar = variableStates.get(condition);
                         if(conditionVar != null) {
-                            if (conditionVar.hasConstantValue() && conditionVar.getConstantValue() != 0) {
+                            if (conditionVar.isBottom()) {
+                                break;
+                            } else if(conditionVar.hasConstantValue() && conditionVar.getConstantValue() != 0) {
                                 worklist.add(trueTarget);
                                 processedBlocks.add(trueTarget);
                                 propagateVars(trueTarget, blockVars, operation.block);
@@ -220,6 +222,7 @@ public class DataFlowInterval {
                             }
                         }
                     }
+                    updateBlockVars(operation.block, variableStates, blockVars);
                     break;
                 case "ret":
                     updateBlockVars(operation.block, variableStates, blockVars);
@@ -294,7 +297,7 @@ public class DataFlowInterval {
                 if (result != null) {
                     leftState.setConstantValue(result);
                 } else {
-                    leftState.markAsTop();
+                    leftState.markAsBottom();
                 }
             }
         } catch (Exception e) {
@@ -305,61 +308,33 @@ public class DataFlowInterval {
     private static void handleCmp(String[] parts, String leftVar, Map<String, VariableState> variableStates) {
         if (parts.length < 5) return;
 
+        VariableState leftState = variableStates.get(leftVar);
         String operation = parts[3];
         String operand1 = parts[4];
         String operand2 = parts[5];
 
-        boolean result = false;
-        boolean isTop = false;
+        VariableState state1 = getAbstractValue(operand1, variableStates);
+        VariableState state2 = getAbstractValue(operand2, variableStates);
 
-        Integer value1 = null, value2 = null;
-        VariableState operand1State = null, operand2State = null;
+        if (state1.isBottom() || state2.isBottom()){
+            leftState.markAsBottom();
+            return;
+        }
 
-        try {
-            value1 = Integer.parseInt(operand1);
-        } catch (NumberFormatException e) {
-            operand1State = variableStates.get(operand1);
-            if(operand1State!=null){
-                if(operand1State.isTop){
-                    isTop = true;
-                }else if(operand1State.hasConstantValue()){
-                    value1 = operand1State.getConstantValue();
-                }else if(!operand1State.isInt()){
-                    //pointer ->T
-                    isTop = true;
-                }else{
-                    isTop = false;
-                }
-            }
+        if (state1.isTop() || state2.isTop() || state1.pointsTo != null || state2.pointsTo != null ) {
+            leftState.markAsTop();
+            return;
         }
 
         try {
-            value2 = Integer.parseInt(operand2);
-        } catch (NumberFormatException e) {
-            operand2State = variableStates.get(operand2);
-            if(operand2State!=null){
-                if(operand2State.isTop){
-                    isTop = true;
-                }else if(operand2State.hasConstantValue()){
-                    value2 = operand2State.getConstantValue();
-                }else if(!operand1State.isInt()){
-                    //pointer ->T
-                    isTop = true;
-                }else{
-                    isTop = false;
-                }
+            Integer value1 = state1.hasConstantValue() ? state1.getConstantValue() : null;
+            Integer value2 = state2.hasConstantValue() ? state2.getConstantValue() : null;
+            if (value1 != null && value2 != null) {
+                boolean result = performComparison(operation, value1, value2);
+                leftState.markAsTop();
             }
-        }
-
-        VariableState leftState = variableStates.get(leftVar);
-
-        if (isTop) {
-            leftState.markAsTop();
-        } else if (value1 != null && value2 != null) {
-            result = performComparison(operation, value1, value2);
-            leftState.markAsTop();
-        } else if (operand1State !=null && operand1State.hasConstantValue() && operand2State !=null && operand2State.hasConstantValue()){
-            leftState.markAsTop();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -499,7 +474,7 @@ public class DataFlowInterval {
             for (Map.Entry<String, String> entry : varsInBlock.entrySet()) {
                 String varName = entry.getKey();
                 String varValue = entry.getValue();
-                if(!varValue.equals("null")) {
+                if(!varValue.equals("null") && varValue.length() != 0) {
                     System.out.println(varName + " -> " + varValue);
                 }
             }
