@@ -21,55 +21,87 @@ public class DataFlowInterval {
     static Set<String> addressTakenVariables = new HashSet<>();
     static Set<String> globalVariables = new HashSet<>();
 
-    public static void dataFlow(String filePath) {
-        Map<String, List<Operation>> basicBlocks = new TreeMap<>();
-        Map<String, VariableState> variableStates = new TreeMap<>();
-        Map<String, List<String>> blockSuccessors = new HashMap<>();
-        Map<String, TreeMap<String, String>> blockVars = new HashMap<>();
-        Set<String> processedBlocks = new HashSet<>();
-        Queue<String> worklist = new LinkedList<>();
-        Map<String, VariableState> preStates = new HashMap<>();
-        Map<String, VariableState> postStates = new HashMap<>();
+    static Map<String, List<Operation>> basicBlocks = new HashMap<>();
+    static Map<String, List<String>> blockSuccessors = new HashMap<>();
 
-        parseLirFile(filePath, basicBlocks, variableStates, blockSuccessors, blockVars);
-        for (String blockName : basicBlocks.keySet()) {
-            if (!preStates.containsKey(blockName)) {
-                preStates.put(blockName, new VariableState());
+    static Map<String, TreeMap<String, String>> blockVars = new HashMap<>();
+    static Map<String, VariableState> variableStates = new TreeMap<>();
+    static Set<String> processedBlocks = new HashSet<>();
+
+    static Queue<String> worklist = new LinkedList<>();
+
+
+    public static void dataFlow(String filePath) {
+        TreeMap<String, TreeMap<String, VariableState>> preStates = new TreeMap<>();
+        TreeMap<String, TreeMap<String, VariableState>> postStates = new TreeMap<>();
+        parseLirFile(filePath);
+        for (String blockName : blockVars.keySet()) {
+            TreeMap<String, VariableState> initialStates = new TreeMap<>();
+            TreeMap<String, String> varsInBlock = blockVars.get(blockName);
+            for (Map.Entry<String, String> entry : varsInBlock.entrySet()) {
+                String varName = entry.getKey();
+                VariableState newState = variableStates.get(varName).clone();
+                initialStates.put(varName, newState);
             }
+            preStates.put(blockName, initialStates);
         }
 
         worklist.add("entry");
         processedBlocks.add("entry");
-        preStates.put("entry", new VariableState());
 
         while (!worklist.isEmpty()) {
             String block = worklist.poll();
-            VariableState preState = preStates.get(block);
-            VariableState postState = analyzeBlock(processedBlocks, worklist, basicBlocks.get(block), preState, variableStates, blockVars);
+//            System.out.println("Poll Worklist: " + worklist.toString());
+            TreeMap<String, VariableState> preState = preStates.get(block);
+            TreeMap<String, VariableState> postState = analyzeBlock(block, preState, processedBlocks);
             postStates.put(block, postState);
 
-            for (String successor : blockSuccessors.getOrDefault(block, new ArrayList<>())) {
-                VariableState successorPreState = preStates.getOrDefault(successor, new VariableState());
-                VariableState updatedPreState = successorPreState.join(postState);
-                if (!updatedPreState.equals(successorPreState)) {
-                    preStates.put(successor, updatedPreState);
-                    worklist.add(successor);
-                    processedBlocks.add(successor);
+            for (String successor : blockSuccessors.getOrDefault(block, new LinkedList<>())) {
+                TreeMap<String, VariableState> successorPreState = preStates.get(successor);
+                TreeMap<String, VariableState> joinedState = joinMaps(successorPreState, postState);
+                if (!joinedState.equals(successorPreState)) {
+                    preStates.put(successor, joinedState);
+                    if (!worklist.contains(successor)) {
+                        processedBlocks.add(successor);
+                        worklist.add(successor);
+//                        System.out.println("Add to Worklist: " + worklist.toString());
+                    }
                 }
             }
         }
-        printAnalysisResults(processedBlocks, variableStates, blockVars);
+//        printAnalysisResults(processedBlocks, variableStates, blockVars);
+        printAnalysisResults(processedBlocks, preStates);
     }
 
-    private static VariableState analyzeBlock(Set<String> processedBlocks, Queue<String> worklist, List<Operation> operations, VariableState preState, Map<String, VariableState> variableStates, Map<String, TreeMap<String, String>> blockVars) {
-        VariableState currentState = preState.clone();
-        for (Operation operation : operations) {
-            currentState = analyzeInstruction(processedBlocks ,worklist, operation, currentState, variableStates, blockVars);
+    private static TreeMap<String, VariableState> analyzeBlock(String block, TreeMap<String, VariableState> preState, Set<String> processedBlocks) {
+        TreeMap<String, VariableState> postState = new TreeMap<>(preState);
+        for (Operation operation : basicBlocks.get(block)) {
+            analyzeInstruction(postState, processedBlocks ,operation);
         }
-        return currentState;
+        return postState;
     }
 
-    private static VariableState analyzeInstruction(Set<String> processedBlocks, Queue<String> worklist, Operation operation, VariableState currentState, Map<String, VariableState> variableStates, Map<String, TreeMap<String, String>> blockVars) {
+    private static TreeMap<String, VariableState> joinMaps(TreeMap<String, VariableState> map1, TreeMap<String, VariableState> map2) {
+        TreeMap<String, VariableState> result = new TreeMap<>(map1);
+
+        for (Map.Entry<String, VariableState> entry : map2.entrySet()) {
+            String varName = entry.getKey();
+            VariableState stateFromMap2 = entry.getValue();
+            if (result.containsKey(varName)) {
+                VariableState stateFromMap1 = result.get(varName);
+                VariableState mergedState = stateFromMap1.join(stateFromMap2);
+                result.put(varName, mergedState);
+//                System.out.println("Merging state for variable '" + varName + "': " + stateFromMap1 + " ⊔ " + stateFromMap2 + " = " + mergedState);
+            } else {
+                result.put(varName, stateFromMap2);
+//                System.out.println("Adding new state for variable '" + varName + "': " + stateFromMap2);
+            }
+        }
+
+        return result;
+    }
+
+    private static void analyzeInstruction(TreeMap<String, VariableState> postState, Set<String> processedBlocks, Operation operation) {
         String instruction = operation.instruction;
         Pattern operationPattern = Pattern.compile("\\$(store|load|alloc|cmp|gep|copy|call_ext|addrof|arith|gfp|ret|call_dir|call_idr|jump|branch)");
         Matcher matcher = operationPattern.matcher(instruction);
@@ -99,27 +131,26 @@ public class DataFlowInterval {
                     }
                     break;
                 case "load":
-                    if (variableStates.containsKey(leftVar)) {
-                        VariableState loadedState = variableStates.get(leftVar);
-                        currentState.merge(loadedState);
+                    if (postState.containsKey(leftVar)) {
+                        VariableState loadedState = postState.get(leftVar);
                         loadedState.markAsTop();
                     }
                     break;
                 case "alloc":
                     break;
                 case "cmp":
-                    handleCmp(parts, leftVar, variableStates);
+                    handleCmp(parts, leftVar, postState);
                     break;
                 case "arith":
-                    handleArith(parts, leftVar, variableStates);
+                    handleArith(parts, leftVar, postState);
                     break;
                 case "gep":
                     break;
                 case "copy":
                     if (parts.length > 3) {
                         String copiedVar = parts[3];
-                        VariableState updateVar = variableStates.get(leftVar);
-                        VariableState copiedState = variableStates.get(copiedVar);
+                        VariableState updateVar = postState.get(leftVar);
+                        VariableState copiedState = postState.get(copiedVar);
                         if (copiedState != null) {
                             if (copiedState.getPointsTo() != null) {
                                 updateVar.setPointsTo(copiedState.getPointsTo());
@@ -144,8 +175,8 @@ public class DataFlowInterval {
 
                     break;
                 case "call_dir":
-                    if(variableStates.get(leftVar)!=null) {
-                        variableStates.get(leftVar).markAsTop();
+                    if(postState.get(leftVar)!=null) {
+                        postState.get(leftVar).markAsTop();
                     }
                     if (instruction.contains("then")) {
                         String targetBlock = instruction.substring(instruction.lastIndexOf("then") + 5).trim();
@@ -157,81 +188,69 @@ public class DataFlowInterval {
                     break;
                 case "call_idr":
                     for (String global : globalVariables) {
-                        variableStates.get(global).markAsTop();
+                        postState.get(global).markAsTop();
                     }
                     break;
                 case "addrof":
                     if (parts.length > 2) {
                         String pointedVar = parts[3];
                         variableStates.get(leftVar).setPointsTo(pointedVar);
+                        postState.get(pointedVar).markAsTop();
                     }
                     break;
                 case "gfp":
-                    if (variableStates.containsKey(leftVar)) {
-                        variableStates.get(leftVar).markAsTop();
-                    } else {
-                        VariableState newTopState = new VariableState();
-                        newTopState.markAsTop();
-                        variableStates.put(leftVar, newTopState);
+                    if (postState.containsKey(leftVar)) {
+                        postState.get(leftVar).markAsTop();
                     }
                     break;
                 case "jump":
                     String targetBlockJump = extractTargetBlock(instruction);
-                    if (!worklist.contains(targetBlockJump)) {
-                        worklist.add(targetBlockJump);
-                        processedBlocks.add(targetBlockJump);
-                        updateBlockVars(operation.block, variableStates, blockVars);
-                        propagateVars(targetBlockJump, blockVars, operation.block);
-                    }
+                    updateBlockVars(operation.block, variableStates, blockVars);
+                    propagateVars(targetBlockJump, blockVars, operation.block);
                     break;
                 case "branch":
                     String condition = parts[1];
                     String trueTarget = parts[2];
                     String falseTarget = parts[3];
+                    List<String> newSuccessor = new ArrayList<>();
                     try {
                         int conValue = Integer.parseInt(condition);
                         if (conValue != 0) {
-                            worklist.add(trueTarget);
-                            processedBlocks.add(trueTarget);
+                            newSuccessor.add(trueTarget);
+                            blockSuccessors.put(operation.block, newSuccessor);
                             propagateVars(trueTarget, blockVars, operation.block);
                         } else{
-                            worklist.add(falseTarget);
-                            processedBlocks.add(falseTarget);
+                            newSuccessor.add(falseTarget);
+                            blockSuccessors.put(operation.block, newSuccessor);
                             propagateVars(falseTarget, blockVars, operation.block);
                         }
                     } catch (NumberFormatException e) {
-                        VariableState conditionVar = variableStates.get(condition);
+                        VariableState conditionVar = postState.get(condition);
                         if(conditionVar != null) {
                             if (conditionVar.isBottom()) {
+                                blockSuccessors.put(operation.block, newSuccessor);
                                 break;
                             } else if(conditionVar.hasConstantValue() && conditionVar.getConstantValue() != 0) {
-                                worklist.add(trueTarget);
-                                processedBlocks.add(trueTarget);
+                                newSuccessor.add(trueTarget);
+                                blockSuccessors.put(operation.block, newSuccessor);
                                 propagateVars(trueTarget, blockVars, operation.block);
                             } else if (conditionVar.hasConstantValue() && conditionVar.getConstantValue() == 0) {
-                                worklist.add(falseTarget);
-                                processedBlocks.add(falseTarget);
+                                newSuccessor.add(falseTarget);
+                                blockSuccessors.put(operation.block, newSuccessor);
                                 propagateVars(falseTarget, blockVars, operation.block);
                             } else {
-                                worklist.add(trueTarget);
-                                processedBlocks.add(trueTarget);
                                 propagateVars(trueTarget, blockVars, operation.block);
-                                worklist.add(falseTarget);
-                                processedBlocks.add(falseTarget);
                                 propagateVars(falseTarget, blockVars, operation.block);
                             }
                         }
                     }
-                    updateBlockVars(operation.block, variableStates, blockVars);
                     break;
                 case "ret":
-                    updateBlockVars(operation.block, variableStates, blockVars);
                     break;
                 default:
                     break;
             }
         }
-        return currentState;
     }
 
     private static void updateBlockVars(String blockName, Map<String, VariableState> variableStates, Map<String, TreeMap<String, String>> blockVars) {
@@ -256,35 +275,39 @@ public class DataFlowInterval {
         blockVars.put(targetBlock, targetVars);
     }
 
-    private static VariableState getAbstractValue(String operand, Map<String, VariableState> variableStates) {
+    private static VariableState getAbstractValue(String operand, Map<String, VariableState> postStates) {
         VariableState state =new VariableState();
         try {
             int value = Integer.parseInt(operand);
             state.setConstantValue(value);
         } catch (NumberFormatException e) {
             // Not an integer, so it should be a variable name
-            state = variableStates.get(operand);
+            if(postStates.containsKey(operand)) {
+                state = postStates.get(operand);
+            }else{
+                state = variableStates.get(operand);
+            }
         }
         return state;
     }
 
-    private static void handleArith(String[] parts, String leftVar, Map<String, VariableState> variableStates) {
+    private static void handleArith(String[] parts, String leftVar, Map<String, VariableState> postStates) {
         if (parts.length < 5) return;
 
-        VariableState leftState = variableStates.get(leftVar);
+        VariableState leftState = postStates.get(leftVar);
         String operation = parts[3];
         String operand1 = parts[4];
         String operand2 = parts[5];
 
-        VariableState state1 = getAbstractValue(operand1, variableStates);
-        VariableState state2 = getAbstractValue(operand2, variableStates);
+        VariableState state1 = getAbstractValue(operand1, postStates);
+        VariableState state2 = getAbstractValue(operand2, postStates);
 
         if (state1.isBottom() || state2.isBottom()){
             leftState.markAsBottom();
             return;
         }
 
-        if (state1.isTop() || state2.isTop()) {
+        if (state1.isTop() || state2.isTop() || state1.pointsTo != null || state2.pointsTo != null ) {
             leftState.markAsTop();
             return;
         }
@@ -305,16 +328,16 @@ public class DataFlowInterval {
         }
     }
 
-    private static void handleCmp(String[] parts, String leftVar, Map<String, VariableState> variableStates) {
+    private static void handleCmp(String[] parts, String leftVar, Map<String, VariableState> postStates) {
         if (parts.length < 5) return;
 
-        VariableState leftState = variableStates.get(leftVar);
+        VariableState leftState = postStates.get(leftVar);
         String operation = parts[3];
         String operand1 = parts[4];
         String operand2 = parts[5];
 
-        VariableState state1 = getAbstractValue(operand1, variableStates);
-        VariableState state2 = getAbstractValue(operand2, variableStates);
+        VariableState state1 = getAbstractValue(operand1, postStates);
+        VariableState state2 = getAbstractValue(operand2, postStates);
 
         if (state1.isBottom() || state2.isBottom()){
             leftState.markAsBottom();
@@ -338,7 +361,7 @@ public class DataFlowInterval {
         }
     }
 
-    private static void parseLirFile(String filePath, Map<String, List<Operation>> basicBlocks, Map<String, VariableState> variableStates, Map<String, List<String>> blockSuccessors, Map<String, TreeMap<String, String>> blockVars) {
+    private static void parseLirFile(String filePath) {
         try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
             String currentBlock = null;
             boolean isMainFunction = false;
@@ -348,7 +371,7 @@ public class DataFlowInterval {
                 line = line.trim();
 
                 if(line.length() == 0) continue;
-                if (line.startsWith("fn main()")) {
+                if (line.startsWith("fn main")) {
                     isMainFunction = true;
                 } else if (isMainFunction && line.startsWith("}")) {
                     isMainFunction = false;
@@ -369,13 +392,17 @@ public class DataFlowInterval {
                             VariableState newState = new VariableState();
                             if (type.startsWith("&int")) {
                                 newState.setPointsTo(type.substring(1));
-                            }else if(type.equals("int")){
+                            }else if (type.equals("int")) {
                                 newState.setInt(true);
+                            }else if (type.startsWith("&")) {
+                                newState.setPointsTo(type.substring(1));
                             }
                             globalVariables.add(varName);
                             variableStates.put(varName, newState);
                         }
                     } else if (line.contains("$addrof")) {
+                        Operation newOp = new Operation(currentBlock, line);
+                        basicBlocks.get(currentBlock).add(newOp);
                         String[] parts = line.split(" ");
                         TreeMap<String, String> varsInBlock = blockVars.get(currentBlock);
                         for (int i = 0; i < parts.length; i++) {
@@ -406,10 +433,12 @@ public class DataFlowInterval {
                             if (line.startsWith("$jump")) {
                                 String targetBlock = extractTargetBlock(line);
                                 blockSuccessors.computeIfAbsent(currentBlock, k -> new ArrayList<>()).add(targetBlock);
-                            }
-                            if (line.startsWith("$branch")) {
+                            }else if (line.startsWith("$branch")) {
                                 blockSuccessors.computeIfAbsent(currentBlock, k -> new ArrayList<>()).add(parts[2]); // trueBlock
                                 blockSuccessors.computeIfAbsent(currentBlock, k -> new ArrayList<>()).add(parts[3]); // falseBlock
+                            }else if (line.contains("then")){
+                                String targetBlock = line.substring(line.lastIndexOf("then") + 5).trim();
+                                blockSuccessors.computeIfAbsent(currentBlock, k -> new ArrayList<>()).add(targetBlock);
                             }
                         }else{
                         }
@@ -463,19 +492,30 @@ public class DataFlowInterval {
         return "";
     }
 
-    private static void printAnalysisResults(Set<String> processedBlocks, Map<String, VariableState> variableStates, Map<String, TreeMap<String, String>> blockVars) {
+    private static void printAnalysisResults(Set<String> processedBlocks, TreeMap<String, TreeMap<String, VariableState>> preStates) {
         // Sort the basic block names alphabetically
         List<String> sortedProcessedBlocks = new ArrayList<>(processedBlocks);
         Collections.sort(sortedProcessedBlocks);
 
         for (String blockName : sortedProcessedBlocks) {
+            TreeMap<String, VariableState> varStates = preStates.get(blockName);
             System.out.println(blockName + ":");
-            TreeMap<String, String> varsInBlock = blockVars.getOrDefault(blockName, new TreeMap<>());
-            for (Map.Entry<String, String> entry : varsInBlock.entrySet()) {
-                String varName = entry.getKey();
-                String varValue = entry.getValue();
-                if(!varValue.equals("null") && varValue.length() != 0) {
-                    System.out.println(varName + " -> " + varValue);
+
+            if (varStates == null || varStates.isEmpty()) {
+                System.out.println();
+                continue;
+            }
+            for (Map.Entry<String, VariableState> varEntry : varStates.entrySet()) {
+                String varName = varEntry.getKey();
+                VariableState varState = varEntry.getValue();
+
+                // Print the variable name and its state
+                if (varState.isInt()) {
+                    if (varState.isTop()) {
+                        System.out.println(varName + " -> Top");
+                    } else if (varState.hasConstantValue()) {
+                        System.out.println(varName + " -> " + varState.getConstantValue());
+                    }
                 }
             }
             System.out.println();

@@ -71,14 +71,21 @@ class VariableState{
     public VariableState clone() {
         VariableState newState = new VariableState();
         newState.isTop = this.isTop;
+        newState.constantValue = this.constantValue;
+        newState.pointsTo = this.pointsTo;
+        newState.isInt = this.isInt;
         return newState;
     }
 
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;
-        if (!(obj instanceof VariableState that)) return false;
-        return isTop == that.isTop;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        VariableState other = (VariableState) obj;
+        return isTop == other.isTop &&
+                Objects.equals(constantValue, other.constantValue) &&
+                Objects.equals(pointsTo, other.pointsTo) &&
+                isInt == other.isInt;
     }
 
     void weakUpdate(VariableState other) {
@@ -92,22 +99,22 @@ class VariableState{
     }
 
     public VariableState join(VariableState other) {
+        VariableState result = this.clone();
 
         //should change after worklist
         if (this.isTop || other.isTop) {
-            this.markAsTop();
-            return this;
+            result.markAsTop();
+        }else if (Objects.equals(this.constantValue, other.constantValue)) {
+
+        }else if(this.isBottom() && other.hasConstantValue()){
+            result.setConstantValue(other.getConstantValue());
+        }else if(this.hasConstantValue() && other.isBottom()){
+
+        }else{
+            result.markAsTop();
         }
 
-        if (Objects.equals(this.constantValue, other.constantValue)) {
-            return this;
-        }
-
-        if (this.constantValue != null || other.constantValue != null) {
-            this.markAsTop();
-        }
-
-        return this;
+        return result;
     }
 }
 
