@@ -22,6 +22,7 @@ public class DataFlowConstants {
     static Set<String> allVars = new HashSet<>();
 
     static Set<String> globalIntVars = new HashSet<>();
+    static Set<String> localIntParams = new HashSet<>();
 
     static Map<String, List<Operation>> basicBlocks = new HashMap<>();
     static Map<String, List<String>> blockSuccessors = new HashMap<>();
@@ -45,6 +46,10 @@ public class DataFlowConstants {
                 VariableState newState = variableStates.get(varName).clone();
                 initialStates.put(varName, newState);
             }
+            for (String param : localIntParams) {
+                VariableState newState = variableStates.get(param).clone();
+                initialStates.put(param, newState);
+            }
             for(String globalVar : globalIntVars){
                 VariableState newState = new VariableState();
                 newState.setInt(true);
@@ -67,7 +72,7 @@ public class DataFlowConstants {
             for (String successor : blockSuccessors.getOrDefault(block, new LinkedList<>())) {
                 TreeMap<String, VariableState> successorPreState = preStates.get(successor);
                 TreeMap<String, VariableState> joinedState = joinMaps(successorPreState, postState);
-                if (!joinedState.equals(successorPreState)) {
+                if (!joinedState.equals(successorPreState) || postState.isEmpty()) {
                     preStates.put(successor, joinedState);
                     if (!worklist.contains(successor)) {
                         processedBlocks.add(successor);
@@ -184,6 +189,17 @@ public class DataFlowConstants {
                     if(postState.get(leftVar)!=null) {
                         postState.get(leftVar).markAsTop();
                     }
+                    if (instruction.contains("(") && instruction.contains(")")) {
+                        String argumentsSubstring = instruction.substring(instruction.indexOf('(') + 1, instruction.indexOf(')'));
+                        String[] argumentVars = argumentsSubstring.split(",");
+
+                        for (String var : argumentVars) {
+                            String varName = var.trim();
+                            if(postState.containsKey(varName)){
+                                //get all op in ()
+                            }
+                        }
+                    }
                     if (instruction.contains("then")) {
                         String targetBlock = instruction.substring(instruction.lastIndexOf("then") + 5).trim();
                         worklist.add(targetBlock);
@@ -216,7 +232,6 @@ public class DataFlowConstants {
                             }
                         }
                     }
-
                     if (instruction.contains("then")) {
                         String targetBlock = instruction.substring(instruction.lastIndexOf("then") + 5).trim();
                         worklist.add(targetBlock);
@@ -227,7 +242,9 @@ public class DataFlowConstants {
                     if (parts.length > 2) {
                         String pointedVar = parts[3];
                         variableStates.get(leftVar).setPointsTo(pointedVar);
-                        postState.get(pointedVar).markAsTop();
+                        if(postState.get(pointedVar) !=null) {
+                            postState.get(pointedVar).markAsTop();
+                        }
                     }
                     break;
                 case "gfp":
@@ -425,20 +442,21 @@ public class DataFlowConstants {
                 if(line.length() == 0) continue;
                 if (line.startsWith("fn "+functionName)) {
                     isFunction = true;
-                    if(line.contains(",")) {
+                    if(line.contains(":") && line.contains("(")) {
+                        String paramSubstring = line.substring(line.indexOf('(') + 1, line.indexOf(')'));
                         StringBuilder transformedPart = new StringBuilder();
                         int parenthesisLevel = 0;
-                        for (char c : line.toCharArray()) {
+                        for (char c : paramSubstring.toCharArray()) {
                             if (c == '(') {
                                 parenthesisLevel++;
-                            } else if (c == ')') {
+                            }else if (c == ')'){
                                 parenthesisLevel--;
-                            } else if (c == ',' && parenthesisLevel > 0) {
+                            } else if (c == ',' && parenthesisLevel > 0){
                                 c = '|';
                             }
                             transformedPart.append(c);
                         }
-                        String[] variables = transformedPart.toString().split(",\\s*");
+                        String[] variables = paramSubstring.toString().split(",\\s*");
                         for (String varDeclaration : variables) {
                             String[] parts = varDeclaration.split(":");
                             String varName = parts[0].trim();
@@ -453,6 +471,7 @@ public class DataFlowConstants {
                                 newState.setPointsTo(type.substring(1));
                             }
                             newState.markAsTop();
+                            localIntParams.add(varName);
                             allVars.add(varName);
                             variableStates.put(varName, newState);
                         }

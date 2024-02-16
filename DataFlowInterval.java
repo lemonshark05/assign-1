@@ -67,7 +67,7 @@ public class DataFlowInterval {
             for (String successor : blockSuccessors.getOrDefault(block, new LinkedList<>())) {
                 TreeMap<String, VariableState> successorPreState = preStates.get(successor);
                 TreeMap<String, VariableState> joinedState = joinMaps(successorPreState, postState);
-                if (!joinedState.equals(successorPreState)) {
+                if (!joinedState.equals(successorPreState) || postState.isEmpty()) {
                     preStates.put(successor, joinedState);
                     if (!worklist.contains(successor)) {
                         processedBlocks.add(successor);
@@ -184,6 +184,17 @@ public class DataFlowInterval {
                     if(postState.get(leftVar)!=null) {
                         postState.get(leftVar).markAsTop();
                     }
+                    if (instruction.contains("(") && instruction.contains(")")) {
+                        String argumentsSubstring = instruction.substring(instruction.indexOf('(') + 1, instruction.indexOf(')'));
+                        String[] argumentVars = argumentsSubstring.split(",");
+
+                        for (String var : argumentVars) {
+                            String varName = var.trim();
+                            if(postState.containsKey(varName)){
+                                //get all op in ()
+                            }
+                        }
+                    }
                     if (instruction.contains("then")) {
                         String targetBlock = instruction.substring(instruction.lastIndexOf("then") + 5).trim();
                         worklist.add(targetBlock);
@@ -216,7 +227,6 @@ public class DataFlowInterval {
                             }
                         }
                     }
-
                     if (instruction.contains("then")) {
                         String targetBlock = instruction.substring(instruction.lastIndexOf("then") + 5).trim();
                         worklist.add(targetBlock);
@@ -227,7 +237,9 @@ public class DataFlowInterval {
                     if (parts.length > 2) {
                         String pointedVar = parts[3];
                         variableStates.get(leftVar).setPointsTo(pointedVar);
-                        postState.get(pointedVar).markAsTop();
+                        if(postState.get(pointedVar) !=null) {
+                            postState.get(pointedVar).markAsTop();
+                        }
                     }
                     break;
                 case "gfp":
