@@ -69,7 +69,7 @@ class VariableState{
     public VariableState clone() {
         VariableState newState = new VariableState();
         newState.isTop = this.isTop;
-        newState.constantValue = this.constantValue;
+        newState.setConstantValue(this.getConstantValue());
         newState.pointsTo = this.pointsTo;
         newState.isInt = this.isInt;
         return newState;

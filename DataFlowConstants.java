@@ -163,7 +163,9 @@ public class DataFlowConstants {
                                 updateVar.setPointsTo(copiedState.getPointsTo());
                             } else if (copiedState.isInt() && copiedState.hasConstantValue()) {
                                 updateVar.setConstantValue(copiedState.getConstantValue());
-                            } else {
+                            } else if(copiedState.isBottom()) {
+                                updateVar.markAsBottom();
+                            }else {
                                 updateVar.markAsTop();
                             }
                         } else {
@@ -194,8 +196,6 @@ public class DataFlowConstants {
                     }
                     break;
                 case "call_idr":
-                    String[] callParts = instruction.split("\\s+");
-
                     if (instruction.contains("(") && instruction.contains(")")) {
                         String argumentsSubstring = instruction.substring(instruction.indexOf('(') + 1, instruction.indexOf(')'));
                         String[] argumentVars = argumentsSubstring.split(",");
@@ -380,7 +380,11 @@ public class DataFlowConstants {
             Integer value2 = state2.hasConstantValue() ? state2.getConstantValue() : null;
             if (value1 != null && value2 != null) {
                 boolean result = performComparison(operation, value1, value2);
-                leftState.markAsTop();
+                if(!result){
+                    leftState.setConstantValue(0);
+                }else{
+                    leftState.markAsTop();
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
