@@ -34,10 +34,8 @@ class VariableState{
     }
 
     void setConstantValue(Integer value) {
-        if (!isTop) {
-            // only update if not Top
-            this.constantValue = value;
-        }
+        this.constantValue = value;
+        this.isTop = false;
     }
 
     public boolean isTop() {

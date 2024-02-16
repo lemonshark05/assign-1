@@ -8,8 +8,8 @@ fi
 LIR_FILE="$1"
 
 if [ -f "$LIR_FILE" ]; then
-    javac dataFlowInterval.java
-    java dataFlowInterval "$LIR_FILE"
+    javac DataFlowInterval.java
+    java DataFlowInterval "$LIR_FILE"
 
 elif [ -f "$JSON_FILE" ]; then
   pass
