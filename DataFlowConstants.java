@@ -19,7 +19,9 @@ public class DataFlowConstants {
     }
 
     static Set<String> addressTakenVariables = new HashSet<>();
-    static Set<String> globalVariables = new HashSet<>();
+    static Set<String> allVars = new HashSet<>();
+
+    static Set<String> globalIntVars = new HashSet<>();
 
     static Map<String, List<Operation>> basicBlocks = new HashMap<>();
     static Map<String, List<String>> blockSuccessors = new HashMap<>();
@@ -42,6 +44,12 @@ public class DataFlowConstants {
                 String varName = entry.getKey();
                 VariableState newState = variableStates.get(varName).clone();
                 initialStates.put(varName, newState);
+            }
+            for(String globalVar : globalIntVars){
+                VariableState newState = new VariableState();
+                newState.setInt(true);
+                newState.markAsTop();
+                initialStates.put(globalVar, newState);
             }
             preStates.put(blockName, initialStates);
         }
@@ -116,7 +124,7 @@ public class DataFlowConstants {
                     if (valueVarOrConstant.matches("\\d+")) {
                         if (variableStates.containsKey(pointerVar) && variableStates.get(pointerVar).getPointsTo() != null) {
                             String pointedVar = variableStates.get(pointerVar).getPointsTo();
-                            if (addressTakenVariables.contains(pointedVar) || globalVariables.contains(pointedVar)) {
+                            if (addressTakenVariables.contains(pointedVar) || allVars.contains(pointedVar)) {
                                 variableStates.get(pointedVar).setConstantValue(Integer.parseInt(valueVarOrConstant));
                             }
                         }
@@ -187,8 +195,24 @@ public class DataFlowConstants {
                     }
                     break;
                 case "call_idr":
-                    for (String global : globalVariables) {
-                        postState.get(global).markAsTop();
+                    String[] callParts = instruction.split("\\s+");
+
+                    if (instruction.contains("(") && instruction.contains(")")) {
+                        String argumentsSubstring = instruction.substring(instruction.indexOf('(') + 1, instruction.indexOf(')'));
+                        String[] argumentVars = argumentsSubstring.split(",");
+
+                        for (String var : argumentVars) {
+                            String varName = var.trim();
+                            if(postState.containsKey(varName)){
+                                postState.get(varName).markAsTop();
+                            }
+                        }
+                    }
+
+                    if (instruction.contains("then")) {
+                        String targetBlock = instruction.substring(instruction.lastIndexOf("then") + 5).trim();
+                        worklist.add(targetBlock);
+                        processedBlocks.add(targetBlock);
                     }
                     break;
                 case "addrof":
@@ -239,6 +263,9 @@ public class DataFlowConstants {
                                 blockSuccessors.put(operation.block, newSuccessor);
                                 propagateVars(falseTarget, blockVars, operation.block);
                             } else {
+                                newSuccessor.add(trueTarget);
+                                newSuccessor.add(falseTarget);
+                                blockSuccessors.put(operation.block, newSuccessor);
                                 propagateVars(trueTarget, blockVars, operation.block);
                                 propagateVars(falseTarget, blockVars, operation.block);
                             }
@@ -364,28 +391,61 @@ public class DataFlowConstants {
     private static void parseLirFile(String filePath) {
         try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
             String currentBlock = null;
+            boolean isFunction = false;
             boolean isMainFunction = false;
+            boolean isStruct = false;
 
             String line;
             while ((line = reader.readLine()) != null) {
                 line = line.trim();
 
                 if(line.length() == 0) continue;
-                if (line.startsWith("fn main")) {
-                    isMainFunction = true;
-                } else if (isMainFunction && line.startsWith("}")) {
+                if (line.startsWith("fn")) {
+                    isFunction = true;
+                    if(line.startsWith("fn main")){
+                        isMainFunction = true;
+                    }
+                } else if (isFunction && line.startsWith("}")) {
+                    isFunction = false;
                     isMainFunction = false;
                     currentBlock = null;
-                } else if (isMainFunction) {
+                } else if(line.startsWith("struct ")){
+                    isStruct = true;
+                } else if(isStruct && line.startsWith("}")) {
+                    isStruct = false;
+                } else if (!isFunction && !isStruct && line.matches("^\\w+:int$")) {
+                    Pattern pattern = Pattern.compile("^(\\w+):int$");
+                    Matcher matcher = pattern.matcher(line);
+                    if (matcher.find()) {
+                        String varName = matcher.group(1);
+                        globalIntVars.add(varName);
+                        allVars.add(varName);
+                    }
+                } else if (isMainFunction ) {
                     if (line.matches("^\\w+:")) {
                         currentBlock = line.replace(":", "");
                         blockVars.putIfAbsent(currentBlock, new TreeMap<>());
                         basicBlocks.putIfAbsent(currentBlock, new ArrayList<>());
                     } else if (line.startsWith("let ")) {
                         String variablesPart = line.substring("let ".length());
-                        String[] variables = variablesPart.split(",\\s*");
+                        StringBuilder transformedPart = new StringBuilder();
+                        int parenthesisLevel = 0;
+                        for (char c : variablesPart.toCharArray()) {
+                            if (c == '(') {
+                                parenthesisLevel++;
+                            }else if (c == ')'){
+                                parenthesisLevel--;
+                            } else if (c == ',' && parenthesisLevel > 0){
+                                c = '|';
+                            }
+                            transformedPart.append(c);
+                        }
+                        String[] variables = transformedPart.toString().split(",\\s*");
                         for (String varDeclaration : variables) {
                             String[] parts = varDeclaration.split(":");
+                            if(parts.length <2){
+                                System.out.println();
+                            }
                             String varName = parts[0].trim();
                             // just get int type
                             String type = parts[1].trim();
@@ -397,7 +457,7 @@ public class DataFlowConstants {
                             }else if (type.startsWith("&")) {
                                 newState.setPointsTo(type.substring(1));
                             }
-                            globalVariables.add(varName);
+                            allVars.add(varName);
                             variableStates.put(varName, newState);
                         }
                     } else if (line.contains("$addrof")) {
