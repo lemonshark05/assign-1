@@ -21,7 +21,7 @@ public class DataFlowInterval {
     static Set<String> addressTakenVariables = new HashSet<>();
     static Set<String> allVars = new HashSet<>();
 
-    static Set<String> globalVars = new HashSet<>();
+    static Set<String> globalIntVars = new HashSet<>();
 
     static Map<String, List<Operation>> basicBlocks = new HashMap<>();
     static Map<String, List<String>> blockSuccessors = new HashMap<>();
@@ -33,10 +33,10 @@ public class DataFlowInterval {
     static Queue<String> worklist = new LinkedList<>();
 
 
-    public static void dataFlow(String filePath) {
+    public static void dataFlow(String filePath, String functionName) {
         TreeMap<String, TreeMap<String, VariableState>> preStates = new TreeMap<>();
         TreeMap<String, TreeMap<String, VariableState>> postStates = new TreeMap<>();
-        parseLirFile(filePath);
+        parseLirFile(filePath, functionName);
         for (String blockName : blockVars.keySet()) {
             TreeMap<String, VariableState> initialStates = new TreeMap<>();
             TreeMap<String, String> varsInBlock = blockVars.get(blockName);
@@ -44,6 +44,12 @@ public class DataFlowInterval {
                 String varName = entry.getKey();
                 VariableState newState = variableStates.get(varName).clone();
                 initialStates.put(varName, newState);
+            }
+            for(String globalVar : globalIntVars){
+                VariableState newState = new VariableState();
+                newState.setInt(true);
+                newState.markAsTop();
+                initialStates.put(globalVar, newState);
             }
             preStates.put(blockName, initialStates);
         }
@@ -71,12 +77,11 @@ public class DataFlowInterval {
                 }
             }
         }
-//        printAnalysisResults(processedBlocks, variableStates, blockVars);
         printAnalysisResults(processedBlocks, preStates);
     }
 
-    private static TreeMap<String, VariableState> analyzeBlock(String block, TreeMap<String, VariableState> preState, Set<String> processedBlocks) {
-        TreeMap<String, VariableState> postState = new TreeMap<>(preState);
+    private static TreeMap<String, VariableState> analyzeBlock(String block, TreeMap<String, VariableState> pState, Set<String> processedBlocks) {
+        TreeMap<String, VariableState> postState = new TreeMap<>(pState);
         for (Operation operation : basicBlocks.get(block)) {
             analyzeInstruction(postState, processedBlocks ,operation);
         }
@@ -158,7 +163,9 @@ public class DataFlowInterval {
                                 updateVar.setPointsTo(copiedState.getPointsTo());
                             } else if (copiedState.isInt() && copiedState.hasConstantValue()) {
                                 updateVar.setConstantValue(copiedState.getConstantValue());
-                            } else {
+                            } else if(copiedState.isBottom()) {
+                                updateVar.markAsBottom();
+                            }else {
                                 updateVar.markAsTop();
                             }
                         } else {
@@ -174,7 +181,16 @@ public class DataFlowInterval {
                     }
                     break;
                 case "call_ext":
-
+                    if(postState.get(leftVar)!=null) {
+                        postState.get(leftVar).markAsTop();
+                    }
+                    if (instruction.contains("then")) {
+                        String targetBlock = instruction.substring(instruction.lastIndexOf("then") + 5).trim();
+                        worklist.add(targetBlock);
+                        processedBlocks.add(targetBlock);
+                        updateBlockVars(operation.block, variableStates, blockVars);
+                        propagateVars(targetBlock, blockVars, operation.block);
+                    }
                     break;
                 case "call_dir":
                     if(postState.get(leftVar)!=null) {
@@ -189,8 +205,6 @@ public class DataFlowInterval {
                     }
                     break;
                 case "call_idr":
-                    String[] callParts = instruction.split("\\s+");
-
                     if (instruction.contains("(") && instruction.contains(")")) {
                         String argumentsSubstring = instruction.substring(instruction.indexOf('(') + 1, instruction.indexOf(')'));
                         String[] argumentVars = argumentsSubstring.split(",");
@@ -301,6 +315,7 @@ public class DataFlowInterval {
         try {
             int value = Integer.parseInt(operand);
             state.setConstantValue(value);
+            state.setInt(true);
         } catch (NumberFormatException e) {
             // Not an integer, so it should be a variable name
             if(postStates.containsKey(operand)) {
@@ -326,6 +341,17 @@ public class DataFlowInterval {
         if (state1.isBottom() || state2.isBottom()){
             leftState.markAsBottom();
             return;
+        }
+
+        if(operation.equals("mul")){
+            if(state1.hasConstantValue() && state1.getConstantValue() == 0){
+                leftState.setConstantValue(0);
+                return;
+            }
+            if(state2.hasConstantValue() && state2.getConstantValue() == 0){
+                leftState.setConstantValue(0);
+                return;
+            }
         }
 
         if (state1.isTop() || state2.isTop() || state1.pointsTo != null || state2.pointsTo != null ) {
@@ -375,34 +401,76 @@ public class DataFlowInterval {
             Integer value2 = state2.hasConstantValue() ? state2.getConstantValue() : null;
             if (value1 != null && value2 != null) {
                 boolean result = performComparison(operation, value1, value2);
-                leftState.markAsTop();
+                if(!result){
+                    leftState.setConstantValue(0);
+                }else{
+                    leftState.setConstantValue(1);
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private static void parseLirFile(String filePath) {
+    private static void parseLirFile(String filePath, String functionName) {
         try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
             String currentBlock = null;
             boolean isFunction = false;
+            boolean isStruct = false;
 
             String line;
             while ((line = reader.readLine()) != null) {
                 line = line.trim();
 
                 if(line.length() == 0) continue;
-                if (line.startsWith("fn main")) {
+                if (line.startsWith("fn "+functionName)) {
                     isFunction = true;
+                    if(line.contains(",")) {
+                        StringBuilder transformedPart = new StringBuilder();
+                        int parenthesisLevel = 0;
+                        for (char c : line.toCharArray()) {
+                            if (c == '(') {
+                                parenthesisLevel++;
+                            } else if (c == ')') {
+                                parenthesisLevel--;
+                            } else if (c == ',' && parenthesisLevel > 0) {
+                                c = '|';
+                            }
+                            transformedPart.append(c);
+                        }
+                        String[] variables = transformedPart.toString().split(",\\s*");
+                        for (String varDeclaration : variables) {
+                            String[] parts = varDeclaration.split(":");
+                            String varName = parts[0].trim();
+                            // just get int type
+                            String type = parts[1].trim();
+                            VariableState newState = new VariableState();
+                            if (type.startsWith("&int")) {
+                                newState.setPointsTo(type.substring(1));
+                            } else if (type.equals("int")) {
+                                newState.setInt(true);
+                            } else if (type.startsWith("&")) {
+                                newState.setPointsTo(type.substring(1));
+                            }
+                            newState.markAsTop();
+                            allVars.add(varName);
+                            variableStates.put(varName, newState);
+                        }
+                    }
                 } else if (isFunction && line.startsWith("}")) {
                     isFunction = false;
                     currentBlock = null;
-                }if (line.matches("^\\w+:int$")) {
+                } else if(line.startsWith("struct ")){
+                    isStruct = true;
+                } else if(isStruct && line.startsWith("}")) {
+                    isStruct = false;
+                } else if (!isFunction && !isStruct && line.matches("^\\w+:int$")) {
                     Pattern pattern = Pattern.compile("^(\\w+):int$");
                     Matcher matcher = pattern.matcher(line);
                     if (matcher.find()) {
-                        String variableName = matcher.group(1);
-                        allVars.add(variableName);
+                        String varName = matcher.group(1);
+                        globalIntVars.add(varName);
+                        allVars.add(varName);
                     }
                 } else if (isFunction) {
                     if (line.matches("^\\w+:")) {
@@ -426,9 +494,6 @@ public class DataFlowInterval {
                         String[] variables = transformedPart.toString().split(",\\s*");
                         for (String varDeclaration : variables) {
                             String[] parts = varDeclaration.split(":");
-                            if(parts.length <2){
-                                System.out.println();
-                            }
                             String varName = parts[0].trim();
                             // just get int type
                             String type = parts[1].trim();
@@ -566,11 +631,15 @@ public class DataFlowInterval {
     }
 
     public static void main(String[] args) {
-        if (args.length != 1) {
-            System.out.println("Usage: java DataFlowConstants <lir_file_path>");
+        if (args.length < 2) {
+            System.out.println("Usage: java DataFlowConstants <lir_file_path> <json_file_path> <function_name>");
             System.exit(1);
         }
         String lirFilePath = args[0];
-        dataFlow(lirFilePath);
+        String functionName = "test";
+        if(args.length > 2 && args[2].length()!=0){
+            functionName = args[2];
+        }
+        dataFlow(lirFilePath, functionName);
     }
 }
