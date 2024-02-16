@@ -7,16 +7,18 @@
 
 #!/bin/bash
 
-if [ "$#" -lt 1 ]; then
-    echo "Usage: ./run-constants-analysis.sh <lir_file> [json_file]"
+if [ "$#" -ne 3 ]; then
+    echo "Usage: ./run-constants-analysis.sh <LIR file> <JSON file> <function name>"
     exit 1
 fi
 
 LIR_FILE="$1"
+JSON_FILE="$2"
+FUNCTION_NAME="$3"
 
 if [ -f "$LIR_FILE" ]; then
     javac DataFlowConstants.java
-    java DataFlowConstants "$LIR_FILE"
+    java DataFlowConstants "$LIR_FILE" "$JSON_FILE" "$FUNCTION_NAME"
 #    javac dataFlowInterval.java
 #    java dataFlowInterval "$LIR_FILE"
 

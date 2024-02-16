@@ -17,7 +17,7 @@ for file in "$TEST_DIR"/*.lir; do
     output_stats="$output_dir/my-$filename"
     diff_output="$output_dir/diff.txt"
 
-    ./run-constants-analysis.sh "$file" "$json_file" > "$output_stats"
+    ./run-constants-analysis.sh "$file" "$json_file" "main"> "$output_stats"
     diff -wp "$output_stats" "$stats_file" > "$diff_output"
 
     if [ -s "$diff_output" ]; then

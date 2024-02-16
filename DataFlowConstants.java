@@ -33,10 +33,10 @@ public class DataFlowConstants {
     static Queue<String> worklist = new LinkedList<>();
 
 
-    public static void dataFlow(String filePath) {
+    public static void dataFlow(String filePath, String functionName) {
         TreeMap<String, TreeMap<String, VariableState>> preStates = new TreeMap<>();
         TreeMap<String, TreeMap<String, VariableState>> postStates = new TreeMap<>();
-        parseLirFile(filePath);
+        parseLirFile(filePath, functionName);
         for (String blockName : blockVars.keySet()) {
             TreeMap<String, VariableState> initialStates = new TreeMap<>();
             TreeMap<String, String> varsInBlock = blockVars.get(blockName);
@@ -77,7 +77,6 @@ public class DataFlowConstants {
                 }
             }
         }
-//        printAnalysisResults(processedBlocks, variableStates, blockVars);
         printAnalysisResults(processedBlocks, preStates);
     }
 
@@ -388,11 +387,10 @@ public class DataFlowConstants {
         }
     }
 
-    private static void parseLirFile(String filePath) {
+    private static void parseLirFile(String filePath, String functionName) {
         try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
             String currentBlock = null;
             boolean isFunction = false;
-            boolean isMainFunction = false;
             boolean isStruct = false;
 
             String line;
@@ -400,14 +398,10 @@ public class DataFlowConstants {
                 line = line.trim();
 
                 if(line.length() == 0) continue;
-                if (line.startsWith("fn")) {
+                if (line.startsWith("fn "+functionName)) {
                     isFunction = true;
-                    if(line.startsWith("fn main")){
-                        isMainFunction = true;
-                    }
                 } else if (isFunction && line.startsWith("}")) {
                     isFunction = false;
-                    isMainFunction = false;
                     currentBlock = null;
                 } else if(line.startsWith("struct ")){
                     isStruct = true;
@@ -421,7 +415,7 @@ public class DataFlowConstants {
                         globalIntVars.add(varName);
                         allVars.add(varName);
                     }
-                } else if (isMainFunction ) {
+                } else if (isFunction) {
                     if (line.matches("^\\w+:")) {
                         currentBlock = line.replace(":", "");
                         blockVars.putIfAbsent(currentBlock, new TreeMap<>());
@@ -583,11 +577,12 @@ public class DataFlowConstants {
     }
 
     public static void main(String[] args) {
-        if (args.length != 1) {
-            System.out.println("Usage: java DataFlowConstants <lir_file_path>");
+        if (args.length != 3) {
+            System.out.println("Usage: java DataFlowConstants <lir_file_path> <json_file_path> <function_name>");
             System.exit(1);
         }
         String lirFilePath = args[0];
-        dataFlow(lirFilePath);
+        String functionName = args[2];
+        dataFlow(lirFilePath, functionName);
     }
 }
