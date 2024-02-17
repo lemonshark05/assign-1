@@ -44,11 +44,8 @@ public class DataFlowConstants {
             for (Map.Entry<String, String> entry : varsInBlock.entrySet()) {
                 String varName = entry.getKey();
                 VariableState newState = variableStates.get(varName).clone();
+                newState.markAsBottom();
                 initialStates.put(varName, newState);
-            }
-            for (String param : localIntParams) {
-                VariableState newState = variableStates.get(param).clone();
-                initialStates.put(param, newState);
             }
             for(String globalVar : globalIntVars){
                 VariableState newState = new VariableState();
@@ -57,6 +54,12 @@ public class DataFlowConstants {
                 initialStates.put(globalVar, newState);
             }
             preStates.put(blockName, initialStates);
+        }
+
+        TreeMap<String, VariableState> entryStates = preStates.get("entry");
+        for (String param : localIntParams) {
+            VariableState newState = variableStates.get(param).clone();
+            entryStates.put(param, newState);
         }
 
         worklist.add("entry");
