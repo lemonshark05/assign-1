@@ -1,41 +1,43 @@
-test:&(int, int) -> int
+f1:&() -> int
+f2:&(int, int) -> int
+test:&() -> int
+
+extern e1:() -> int
+extern e2:(int) -> int
+
+fn f1() -> int {
+entry:
+  $ret 0
+}
+
+fn f2(p:int, q:int) -> int {
+entry:
+  $ret 0
+}
 
 fn main() -> int {
 entry:
   $ret 0
 }
 
-fn test(p:int, q:int) -> int {
-let _lo1:int, _lo2:int, _t3:int, _t4:int, id0:int
+fn test() -> int {
+let _t1:int, _t2:int, id0:int
 bb1:
-  id0 = $copy _lo1
-  q = $copy 9
-  q = $copy id0
-  p = $copy 9
-  _t4 = $arith sub 0 2
-  $branch _t4 bb5 bb6
+  $branch id0 bb2 bb3
 
 bb2:
-  _lo1 = $copy 0
   $jump bb1
 
 bb3:
-  _lo1 = $copy 1
-  $jump bb1
+  _t1 = $call_dir f1() then bb4
 
 bb4:
-  p = $copy _lo2
-  $ret q
-
-bb5:
-  _lo2 = $copy 0
-  $jump bb4
-
-bb6:
-  _lo2 = $copy 1
-  $jump bb4
+  id0 = $copy _t1
+  $call_ext e1()
+  _t2 = $arith sub 0 8
+  $ret _t2
 
 entry:
-  _t3 = $arith sub 0 4
-  $branch _t3 bb2 bb3
+  id0 = $copy id0
+  $jump bb1
 }

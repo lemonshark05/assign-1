@@ -33,10 +33,11 @@ public class DataFlowConstants {
 
     static Queue<String> worklist = new PriorityQueue<>();
 
+    static TreeMap<String, TreeMap<String, VariableState>> preStates = new TreeMap<>();
+    static TreeMap<String, TreeMap<String, VariableState>> postStates = new TreeMap<>();
+
 
     public static void dataFlow(String filePath, String functionName) {
-        TreeMap<String, TreeMap<String, VariableState>> preStates = new TreeMap<>();
-        TreeMap<String, TreeMap<String, VariableState>> postStates = new TreeMap<>();
         parseLirFile(filePath, functionName);
         for (String blockName : blockVars.keySet()) {
             TreeMap<String, VariableState> initialStates = new TreeMap<>();
@@ -44,7 +45,11 @@ public class DataFlowConstants {
             for (Map.Entry<String, String> entry : varsInBlock.entrySet()) {
                 String varName = entry.getKey();
                 VariableState newState = variableStates.get(varName).clone();
-                newState.markAsBottom();
+                if(addressTakenVariables.contains(varName)){
+                    newState.markAsTop();
+                }else {
+                    newState.markAsBottom();
+                }
                 initialStates.put(varName, newState);
             }
             for(String globalVar : globalIntVars){
@@ -82,6 +87,10 @@ public class DataFlowConstants {
                         worklist.add(successor);
 //                        System.out.println("Add to Worklist: " + worklist.toString());
                     }
+                }
+                if (!processedBlocks.contains(successor)) {
+                    processedBlocks.add(successor);
+                    worklist.add(successor);
                 }
             }
         }
@@ -217,9 +226,7 @@ public class DataFlowConstants {
 
                         for (String var : argumentVars) {
                             String varName = var.trim();
-                            if(postState.containsKey(varName)){
-                                //get all op in ()
-                            }
+
                         }
                     }
                     if (instruction.contains("then")) {
@@ -239,15 +246,16 @@ public class DataFlowConstants {
                     }
                     break;
                 case "call_idr":
+                    if(postState.get(leftVar)!=null) {
+                        postState.get(leftVar).markAsTop();
+                    }
                     if (instruction.contains("(") && instruction.contains(")")) {
                         String argumentsSubstring = instruction.substring(instruction.indexOf('(') + 1, instruction.indexOf(')'));
                         String[] argumentVars = argumentsSubstring.split(",");
 
                         for (String var : argumentVars) {
                             String varName = var.trim();
-                            if(postState.containsKey(varName)){
-                                postState.get(varName).markAsTop();
-                            }
+
                         }
                     }
                     if (instruction.contains("then")) {
@@ -341,7 +349,7 @@ public class DataFlowConstants {
     private static void handleArith(String[] parts, String leftVar, Map<String, VariableState> postStates) {
         if (parts.length < 5) return;
 
-        if(leftVar.equals("_t21")){
+        if(leftVar.equals("_t9")){
             String a = leftVar;
         }
 
@@ -360,16 +368,6 @@ public class DataFlowConstants {
             }
         }
 
-        if(operation.equals("div")){
-            if(state2.equals("0")){
-                leftState.markAsBottom();
-                return;
-            }else if(state1.equals("0")){
-                leftState.setConstantValue(0);
-                return;
-            }
-        }
-
         if (state1.equals("B") || state2.equals("B")){
             leftState.markAsBottom();
             return;
@@ -378,6 +376,16 @@ public class DataFlowConstants {
         if (state1.equals("T") || state2.equals("T")) {
             leftState.markAsTop();
             return;
+        }
+
+        if(operation.equals("div")){
+            if(state2.equals("0")){
+                leftState.markAsBottom();
+                return;
+            }else if(state1.equals("0")){
+                leftState.setConstantValue(0);
+                return;
+            }
         }
 
         try {

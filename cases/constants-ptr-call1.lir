@@ -1,0 +1,50 @@
+f1:&(int) -> int
+f2:&(int, &int) -> int
+test:&() -> int
+
+extern e1:() -> int
+extern e2:(&int) -> int
+
+fn f1(p:int) -> int {
+entry:
+  $ret 0
+}
+
+fn f2(p:int, q:&int) -> int {
+entry:
+  $ret 0
+}
+
+fn main() -> int {
+entry:
+  $ret 0
+}
+
+fn test() -> int {
+let _t1:int, _t10:int, _t11:int, _t12:&int, _t13:int, _t14:int, _t2:&int, _t3:int, _t4:int, _t5:int, _t6:&int, _t7:&int, _t8:&&int, _t9:&int, id0:int, id1:&int, id2:int, id3:&int, id4:&int, id5:int, id6:int, id7:&int, id8:&int
+entry:
+  _t1 = $call_ext e2(id1)
+  _t2 = $addrof id0
+  _t3 = $load _t2
+  _t4 = $arith sub _t1 _t3
+  _t5 = $cmp eq _t4 id0
+  id0 = $copy _t5
+  id2 = $copy 6
+  id3 = $copy id1
+  _t6 = $addrof id0
+  id4 = $copy _t6
+  _t7 = $addrof id6
+  _t8 = $addrof id7
+  _t9 = $load _t8
+  _t10 = $cmp neq _t7 _t9
+  id5 = $copy _t10
+  id8 = $copy id1
+  _t11 = $cmp eq id2 id0
+  id0 = $copy _t11
+  id3 = $alloc 1 [_alloc1]
+  _t12 = $gep id4 id5
+  _t13 = $load id8
+  $store _t12 _t13
+  _t14 = $load id1
+  $ret _t14
+}

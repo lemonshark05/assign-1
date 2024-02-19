@@ -1,0 +1,44 @@
+f1:&() -> int
+f2:&(int, int) -> int
+test:&() -> int
+
+extern e1:() -> int
+extern e2:(int) -> int
+
+fn f1() -> int {
+entry:
+  $ret 0
+}
+
+fn f2(p:int, q:int) -> int {
+entry:
+  $ret 0
+}
+
+fn main() -> int {
+entry:
+  $ret 0
+}
+
+fn test() -> int {
+let _t1:int, _t2:int, _t3:int, _t4:int, _t5:int, _t6:int, _t7:int, _t8:int, id0:int, id1:int, id2:int
+bb1:
+  id0 = $copy _t5
+  _t6 = $arith sub 0 8
+  _t7 = $arith sub id2 _t6
+  id1 = $copy _t7
+  $call_dir test() then bb2
+
+bb2:
+  id0 = $copy 10
+  _t8 = $call_ext e2(id0)
+  id1 = $copy _t8
+  $ret 5
+
+entry:
+  _t1 = $arith sub 0 id0
+  _t2 = $cmp neq 4 id0
+  _t3 = $cmp lte _t1 _t2
+  _t4 = $arith sub 0 9
+  _t5 = $call_dir f2(_t3, _t4) then bb1
+}

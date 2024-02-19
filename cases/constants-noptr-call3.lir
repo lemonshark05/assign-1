@@ -1,0 +1,79 @@
+f1:&() -> int
+f2:&(int, int) -> int
+test:&() -> int
+
+extern e1:() -> int
+extern e2:(int) -> int
+
+fn f1() -> int {
+entry:
+  $ret 0
+}
+
+fn f2(p:int, q:int) -> int {
+entry:
+  $ret 0
+}
+
+fn main() -> int {
+entry:
+  $ret 0
+}
+
+fn test() -> int {
+let _lo1:int, _t10:int, _t11:int, _t12:int, _t13:int, _t14:int, _t15:int, _t16:int, _t17:int, _t18:int, _t19:int, _t2:int, _t20:int, _t21:int, _t22:int, _t23:int, _t3:int, _t4:int, _t5:int, _t6:int, _t7:int, _t8:int, _t9:int, id0:int, id1:int, id2:int, id3:int, id4:int
+bb1:
+  _t6 = $arith sub 0 3
+  _t7 = $arith sub 0 _t6
+  _t8 = $arith sub 0 _t7
+  _t9 = $arith sub 0 8
+  _t10 = $arith add _lo1 _t9
+  _t11 = $cmp lte _t8 _t10
+  id0 = $copy _t11
+  _t12 = $arith sub 0 1
+  _t13 = $arith sub 0 _t12
+  _t14 = $cmp neq _t13 1
+  id0 = $copy _t14
+  $jump bb3
+
+bb2:
+  _lo1 = $copy id1
+  $jump bb1
+
+bb3:
+  $branch id0 bb4 bb5
+
+bb4:
+  _t15 = $arith sub 0 10
+  _t16 = $arith add id1 _t15
+  _t17 = $arith sub 0 _t16
+  id1 = $copy _t17
+  $call_ext e1()
+  _t18 = $arith sub 0 5
+  _t19 = $call_dir f2(id1, _t18) then bb6
+
+bb5:
+  _t23 = $arith sub 0 9
+  $ret _t23
+
+bb6:
+  id2 = $copy _t19
+  id1 = $copy 6
+  _t20 = $arith sub 0 10
+  _t21 = $arith sub 0 _t20
+  _t22 = $cmp neq 1 _t21
+  id4 = $copy _t22
+  $jump bb3
+
+entry:
+  _t2 = $arith sub 0 10
+  id1 = $copy _t2
+  id2 = $copy id3
+  _t3 = $arith sub 0 10
+  id4 = $copy _t3
+  id0 = $copy id1
+  _t4 = $arith sub 0 4
+  _lo1 = $copy _t4
+  _t5 = $cmp neq _lo1 0
+  $branch _t5 bb2 bb1
+}
