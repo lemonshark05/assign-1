@@ -45,7 +45,7 @@ public class DataFlowInterval {
             for (Map.Entry<String, String> entry : varsInBlock.entrySet()) {
                 String varName = entry.getKey();
                 VariableState newState = variableStates.get(varName).clone();
-                if(addressTakenVariables.contains(varName)){
+                if(blockName.equals("entry") && addressTakenVariables.contains(varName)){
                     newState.markAsTop();
                 }else {
                     newState.markAsBottom();
@@ -80,7 +80,7 @@ public class DataFlowInterval {
             for (String successor : blockSuccessors.getOrDefault(block, new LinkedList<>())) {
                 TreeMap<String, VariableState> successorPreState = preStates.get(successor);
                 TreeMap<String, VariableState> joinedState = joinMaps(successorPreState, postState);
-                if (!joinedState.equals(successorPreState) || postState.isEmpty() || block.equals("entry")) {
+                if (!joinedState.equals(successorPreState) || postState.isEmpty()) {
                     preStates.put(successor, joinedState);
                     if (!worklist.contains(successor)) {
                         processedBlocks.add(successor);
@@ -88,13 +88,21 @@ public class DataFlowInterval {
 //                        System.out.println("Add to Worklist: " + worklist.toString());
                     }
                 }
+                if (!processedBlocks.contains(successor)) {
+                    processedBlocks.add(successor);
+                    worklist.add(successor);
+                }
             }
         }
-        printAnalysisResults(processedBlocks, preStates);
+        printAnalysisResults(processedBlocks, postStates);
     }
 
     private static TreeMap<String, VariableState> analyzeBlock(String block, TreeMap<String, VariableState> pState, Set<String> processedBlocks) {
-        TreeMap<String, VariableState> postState = new TreeMap<>(pState);
+        TreeMap<String, VariableState> postState = new TreeMap<>();
+        for (Map.Entry<String, VariableState> entry : pState.entrySet()) {
+            VariableState newState = entry.getValue().clone();
+            postState.put(entry.getKey(), newState);
+        }
         for (Operation operation : basicBlocks.get(block)) {
             analyzeInstruction(postState, processedBlocks ,operation);
         }
@@ -222,7 +230,12 @@ public class DataFlowInterval {
 
                         for (String var : argumentVars) {
                             String varName = var.trim();
-
+                            if(variableStates.containsKey(varName)) {
+                                String pointedVar = variableStates.get(varName).getPointsTo();
+                                if (pointedVar !=null && postState.containsKey(pointedVar)) {
+                                    postState.get(pointedVar).markAsTop();
+                                }
+                            }
                         }
                     }
                     if (instruction.contains("then")) {
@@ -345,7 +358,7 @@ public class DataFlowInterval {
     private static void handleArith(String[] parts, String leftVar, Map<String, VariableState> postStates) {
         if (parts.length < 5) return;
 
-        if(leftVar.equals("_t9")){
+        if(leftVar.equals("_t16")){
             String a = leftVar;
         }
 
@@ -358,7 +371,7 @@ public class DataFlowInterval {
         String state2 = getAbstractValue(operand2, postStates);
 
         if(operation.equals("mul")){
-            if(state2.equals("0") || state2.equals("0")){
+            if(state1.equals("0") || state2.equals("0")){
                 leftState.setConstantValue(0);
                 return;
             }

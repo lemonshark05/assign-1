@@ -21,59 +21,112 @@ entry:
 }
 
 fn test() -> int {
-let _lo1:int, _t10:int, _t11:int, _t12:int, _t13:int, _t14:int, _t15:int, _t16:int, _t17:int, _t18:int, _t19:int, _t2:int, _t20:int, _t21:int, _t22:int, _t23:int, _t3:int, _t4:int, _t5:int, _t6:int, _t7:int, _t8:int, _t9:int, id0:int, id1:int, id2:int, id3:int, id4:int
+let _lo1:int, _lo2:int, _lo3:int, _lo4:int, _t10:int, _t11:int, _t12:int, _t13:int, _t14:int, _t15:int, _t16:int, _t17:int, _t18:int, _t19:int, _t20:int, _t21:int, _t22:int, _t23:int, _t24:int, _t25:int, _t26:int, _t27:int, _t5:int, _t6:int, _t7:int, _t8:int, _t9:int, id0:int, id1:int, id2:int, id3:int, id4:int
 bb1:
-  _t6 = $arith sub 0 3
-  _t7 = $arith sub 0 _t6
-  _t8 = $arith sub 0 _t7
-  _t9 = $arith sub 0 8
-  _t10 = $arith add _lo1 _t9
-  _t11 = $cmp lte _t8 _t10
-  id0 = $copy _t11
-  _t12 = $arith sub 0 1
-  _t13 = $arith sub 0 _t12
-  _t14 = $cmp neq _t13 1
-  id0 = $copy _t14
-  $jump bb3
+  _t16 = $call_dir test() then bb9
+
+bb10:
+  id0 = $copy _t17
+  _t18 = $call_dir f1() then bb11
+
+bb11:
+  _t19 = $arith add id4 _t18
+  id3 = $copy _t19
+  _t20 = $arith sub 0 4
+  $branch _t20 bb13 bb14
+
+bb12:
+  _t21 = $arith div _lo1 id0
+  $branch _t21 bb16 bb17
+
+bb13:
+  _lo1 = $copy 0
+  $jump bb12
+
+bb14:
+  _lo1 = $copy 1
+  $jump bb12
+
+bb15:
+  id1 = $copy _lo2
+  _t22 = $arith sub 0 id4
+  _lo4 = $copy _t22
+  _t23 = $cmp eq _lo4 0
+  $branch _t23 bb19 bb18
+
+bb16:
+  _lo2 = $copy 0
+  $jump bb15
+
+bb17:
+  _lo2 = $copy 1
+  $jump bb15
+
+bb18:
+  _lo3 = $copy _lo4
+  _t24 = $cmp eq _lo3 0
+  $branch _t24 bb21 bb20
+
+bb19:
+  _lo4 = $copy id0
+  $jump bb18
 
 bb2:
-  _lo1 = $copy id1
+  _t10 = $arith sub 0 3
+  id0 = $copy _t10
+  id0 = $copy id1
+  id2 = $copy 4
   $jump bb1
 
+bb20:
+  $ret _lo3
+
+bb21:
+  _t25 = $arith sub 0 8
+  _t26 = $arith sub 0 _t25
+  _t27 = $arith sub 0 _t26
+  _lo3 = $copy _t27
+  $jump bb20
+
 bb3:
-  $branch id0 bb4 bb5
+  _t11 = $arith sub 0 10
+  $branch _t11 bb5 bb6
 
 bb4:
-  _t15 = $arith sub 0 10
-  _t16 = $arith add id1 _t15
-  _t17 = $arith sub 0 _t16
-  id1 = $copy _t17
-  $call_ext e1()
-  _t18 = $arith sub 0 5
-  _t19 = $call_dir f2(id1, _t18) then bb6
+  _t13 = $call_dir test() then bb8
 
 bb5:
-  _t23 = $arith sub 0 9
-  $ret _t23
+  $call_dir f1() then bb7
 
 bb6:
-  id2 = $copy _t19
-  id1 = $copy 6
-  _t20 = $arith sub 0 10
-  _t21 = $arith sub 0 _t20
-  _t22 = $cmp neq 1 _t21
-  id4 = $copy _t22
-  $jump bb3
+  _t12 = $arith sub 0 5
+  id0 = $copy _t12
+  $jump bb4
+
+bb7:
+  $jump bb4
+
+bb8:
+  id3 = $copy _t13
+  _t14 = $arith sub 0 9
+  _t15 = $cmp eq id0 _t14
+  id4 = $copy _t15
+  $jump bb1
+
+bb9:
+  id4 = $copy _t16
+  _t17 = $call_dir test() then bb10
 
 entry:
-  _t2 = $arith sub 0 10
-  id1 = $copy _t2
-  id2 = $copy id3
-  _t3 = $arith sub 0 10
-  id4 = $copy _t3
-  id0 = $copy id1
-  _t4 = $arith sub 0 4
-  _lo1 = $copy _t4
-  _t5 = $cmp neq _lo1 0
-  $branch _t5 bb2 bb1
+  id0 = $copy 8
+  id2 = $copy id1
+  _t5 = $arith sub 0 id0
+  _t6 = $arith sub 0 id2
+  _t7 = $cmp neq _t5 _t6
+  id1 = $copy _t7
+  _t8 = $arith sub 0 2
+  _t9 = $arith sub 0 _t8
+  id3 = $copy _t9
+  id4 = $copy 0
+  $branch id0 bb2 bb3
 }
