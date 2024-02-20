@@ -1,0 +1,86 @@
+bb1:
+_lo1 -> Top
+p -> Top
+q -> Top
+
+bb10:
+_lo1 -> Top
+_lo2 -> 0
+_t4 -> -4
+_t5 -> 4
+_t6 -> Top
+_t7 -> 0
+_t8 -> 1
+_t9 -> -8
+id0 -> 4
+id1 -> 1
+id2 -> 9
+p -> Top
+q -> 7
+
+bb11:
+_lo1 -> Top
+_lo2 -> 0
+id0 -> 4
+id1 -> Top
+id2 -> 9
+p -> Top
+q -> Top
+
+bb2:
+_lo1 -> 0
+p -> Top
+q -> Top
+
+bb3:
+_lo1 -> 1
+p -> Top
+q -> Top
+
+bb4:
+_lo1 -> Top
+id0 -> 4
+id1 -> Top
+p -> Top
+q -> Top
+
+bb5:
+_lo1 -> Top
+id0 -> 4
+id1 -> Top
+p -> Top
+q -> Top
+
+bb6:
+_lo1 -> Top
+id0 -> 4
+id1 -> Top
+id2 -> 9
+p -> Top
+q -> Top
+
+bb7:
+_lo1 -> Top
+id0 -> 4
+id1 -> Top
+p -> Top
+q -> Top
+
+bb8:
+_lo1 -> 0
+id0 -> 4
+id1 -> Top
+p -> Top
+q -> Top
+
+bb9:
+_lo1 -> 1
+id0 -> 4
+id1 -> Top
+p -> Top
+q -> Top
+
+entry:
+p -> Top
+q -> Top
+
