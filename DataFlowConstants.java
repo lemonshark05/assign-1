@@ -358,7 +358,7 @@ public class DataFlowConstants {
     private static void handleArith(String[] parts, String leftVar, Map<String, VariableState> postStates) {
         if (parts.length < 5) return;
 
-        if(leftVar.equals("_t16")){
+        if(leftVar.equals("_t10")){
             String a = leftVar;
         }
 
@@ -370,13 +370,6 @@ public class DataFlowConstants {
         String state1 = getAbstractValue(operand1, postStates);
         String state2 = getAbstractValue(operand2, postStates);
 
-        if(operation.equals("mul")){
-            if(state1.equals("0") || state2.equals("0")){
-                leftState.setConstantValue(0);
-                return;
-            }
-        }
-
         if (state1.equals("B") || state2.equals("B")){
             leftState.markAsBottom();
             return;
@@ -385,6 +378,13 @@ public class DataFlowConstants {
         if (state1.equals("T") || state2.equals("T")) {
             leftState.markAsTop();
             return;
+        }
+
+        if(operation.equals("mul")){
+            if(state1.equals("0") || state2.equals("0")){
+                leftState.setConstantValue(0);
+                return;
+            }
         }
 
         if(operation.equals("div")){
