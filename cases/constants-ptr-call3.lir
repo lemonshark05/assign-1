@@ -1,0 +1,46 @@
+f1:&(int) -> int
+f2:&(int, &int) -> int
+test:&() -> int
+
+extern e1:() -> int
+extern e2:(&int) -> int
+
+fn f1(p:int) -> int {
+entry:
+  $ret 0
+}
+
+fn f2(p:int, q:&int) -> int {
+entry:
+  $ret 0
+}
+
+fn main() -> int {
+entry:
+  $ret 0
+}
+
+fn test() -> int {
+let _t1:&&int, _t2:int, _t3:int, _t4:&&int, _t5:&int, _t6:int, _t7:int, _t8:&int, _t9:int, id0:&int, id1:&int, id2:int, id3:&() -> int, id4:&&int, id5:&int, id6:&int, id7:&int
+bb1:
+  _t3 = $cmp eq id0 id5
+  _t4 = $gep id4 _t3
+  _t5 = $load _t4
+  _t6 = $call_dir f2(_t2, _t5) then bb2
+
+bb2:
+  _t7 = $arith sub 0 _t6
+  id2 = $copy _t7
+  _t8 = $addrof id2
+  _t9 = $cmp eq id7 _t8
+  $ret _t9
+
+entry:
+  id0 = $copy id1
+  _t1 = $addrof id0
+  id4 = $copy _t1
+  id5 = $copy id6
+  $store id0 1
+  id1 = $alloc 1 [_alloc1]
+  _t2 = $call_idr id3() then bb1
+}

@@ -1,0 +1,79 @@
+f1:&(int) -> int
+f2:&(int, &int) -> int
+test:&() -> int
+
+extern e1:() -> int
+extern e2:(&int) -> int
+
+fn f1(p:int) -> int {
+entry:
+  $ret 0
+}
+
+fn f2(p:int, q:&int) -> int {
+entry:
+  $ret 0
+}
+
+fn main() -> int {
+entry:
+  $ret 0
+}
+
+fn test() -> int {
+let _lo1:int, _lo2:int, _t10:&&(int) -> int, _t11:int, _t12:int, _t13:&int, _t14:&int, _t15:int, _t16:int, _t17:&&(int) -> int, _t18:&(int) -> int, _t19:int, _t3:&&int, _t4:&int, _t5:int, _t6:int, _t7:&&&&(int) -> int, _t8:&&&(int) -> int, _t9:&&&(int) -> int, id0:int, id1:&int, id10:int, id2:&int, id3:&int, id4:int, id5:int, id6:&&(int) -> int, id7:&&(int) -> int, id8:&&&&(int) -> int, id9:int
+bb1:
+  id10 = $copy _lo1
+  _t5 = $call_dir test() then bb4
+
+bb2:
+  _lo1 = $copy 0
+  $jump bb1
+
+bb3:
+  _lo1 = $copy 1
+  $jump bb1
+
+bb4:
+  _lo2 = $copy _t5
+  _t6 = $cmp neq _lo2 0
+  $branch _t6 bb6 bb5
+
+bb5:
+  _t7 = $gep id8 id9
+  _t8 = $load _t7
+  _t9 = $gep _t8 _lo2
+  _t10 = $load _t9
+  id7 = $copy _t10
+  id6 = $copy id7
+  _t11 = $load id1
+  _t12 = $arith mul _t11 id0
+  id0 = $copy _t12
+  _t13 = $addrof id0
+  _t14 = $addrof id5
+  _t15 = $cmp neq _t13 _t14
+  id4 = $copy _t15
+  _t16 = $call_dir test() then bb7
+
+bb6:
+  _lo2 = $copy id10
+  $jump bb5
+
+bb7:
+  _t17 = $gep id6 id4
+  _t18 = $load _t17
+  _t19 = $call_idr _t18(_t16) then bb8
+
+bb8:
+  id0 = $copy _t19
+  $ret 4
+
+entry:
+  id3 = $copy id1
+  id2 = $copy id3
+  _t3 = $addrof id2
+  _t4 = $load _t3
+  id1 = $copy _t4
+  id4 = $copy id0
+  $branch 3 bb2 bb3
+}

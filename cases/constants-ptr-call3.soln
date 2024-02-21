@@ -1,0 +1,18 @@
+bb1:
+_t2 -> Top
+_t3 -> Top
+_t6 -> Top
+id2 -> Top
+
+bb2:
+_t2 -> Top
+_t3 -> Top
+_t6 -> Top
+_t7 -> Top
+_t9 -> Top
+id2 -> Top
+
+entry:
+_t2 -> Top
+id2 -> 1
+

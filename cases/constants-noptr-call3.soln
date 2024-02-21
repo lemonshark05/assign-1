@@ -91,24 +91,6 @@ id2 -> 4
 id3 -> Top
 id4 -> Top
 
-bb16:
-_lo1 -> 0
-_lo2 -> 0
-_t10 -> -3
-_t16 -> Top
-_t17 -> Top
-_t18 -> Top
-_t19 -> Top
-_t20 -> -4
-_t21 -> Top
-_t5 -> -8
-_t8 -> -2
-_t9 -> 2
-id0 -> Top
-id2 -> 4
-id3 -> Top
-id4 -> Top
-
 bb17:
 _lo1 -> 0
 _lo2 -> 1
@@ -118,7 +100,7 @@ _t17 -> Top
 _t18 -> Top
 _t19 -> Top
 _t20 -> -4
-_t21 -> Top
+_t21 -> 0
 _t5 -> -8
 _t8 -> -2
 _t9 -> 2
@@ -129,7 +111,7 @@ id4 -> Top
 
 bb18:
 _lo1 -> 0
-_lo2 -> Top
+_lo2 -> 1
 _lo3 -> Top
 _lo4 -> Top
 _t10 -> -3
@@ -138,7 +120,7 @@ _t17 -> Top
 _t18 -> Top
 _t19 -> Top
 _t20 -> -4
-_t21 -> Top
+_t21 -> 0
 _t22 -> Top
 _t23 -> Top
 _t24 -> Top
@@ -146,14 +128,14 @@ _t5 -> -8
 _t8 -> -2
 _t9 -> 2
 id0 -> Top
-id1 -> Top
+id1 -> 1
 id2 -> 4
 id3 -> Top
 id4 -> Top
 
 bb19:
 _lo1 -> 0
-_lo2 -> Top
+_lo2 -> 1
 _lo4 -> Top
 _t10 -> -3
 _t16 -> Top
@@ -161,14 +143,14 @@ _t17 -> Top
 _t18 -> Top
 _t19 -> Top
 _t20 -> -4
-_t21 -> Top
+_t21 -> 0
 _t22 -> Top
 _t23 -> Top
 _t5 -> -8
 _t8 -> -2
 _t9 -> 2
 id0 -> Top
-id1 -> Top
+id1 -> 1
 id2 -> 4
 id3 -> Top
 id4 -> Top
@@ -184,7 +166,7 @@ id4 -> 0
 
 bb20:
 _lo1 -> 0
-_lo2 -> Top
+_lo2 -> 1
 _lo3 -> Top
 _lo4 -> Top
 _t10 -> -3
@@ -193,7 +175,7 @@ _t17 -> Top
 _t18 -> Top
 _t19 -> Top
 _t20 -> -4
-_t21 -> Top
+_t21 -> 0
 _t22 -> Top
 _t23 -> Top
 _t24 -> Top
@@ -204,14 +186,14 @@ _t5 -> -8
 _t8 -> -2
 _t9 -> 2
 id0 -> Top
-id1 -> Top
+id1 -> 1
 id2 -> 4
 id3 -> Top
 id4 -> Top
 
 bb21:
 _lo1 -> 0
-_lo2 -> Top
+_lo2 -> 1
 _lo3 -> -8
 _lo4 -> Top
 _t10 -> -3
@@ -220,7 +202,7 @@ _t17 -> Top
 _t18 -> Top
 _t19 -> Top
 _t20 -> -4
-_t21 -> Top
+_t21 -> 0
 _t22 -> Top
 _t23 -> Top
 _t24 -> Top
@@ -231,7 +213,7 @@ _t5 -> -8
 _t8 -> -2
 _t9 -> 2
 id0 -> Top
-id1 -> Top
+id1 -> 1
 id2 -> 4
 id3 -> Top
 id4 -> Top

@@ -54,11 +54,11 @@ public class DataFlowConstants {
             for (Map.Entry<String, String> entry : varsInBlock.entrySet()) {
                 String varName = entry.getKey();
                 VariableState newState = variableStates.get(varName).clone();
-                if(blockName.equals("entry") && addressTakenVariables.contains(varName)){
-                    newState.markAsTop();
-                }else {
+//                if(blockName.equals("entry") && addressTakenVarInit.get(varName) != null){
+//                    newState.markAsTop();
+//                }else {
                     newState.markAsBottom();
-                }
+//                }
                 initialStates.put(varName, newState);
             }
 
@@ -162,30 +162,17 @@ public class DataFlowConstants {
                     String valueVarOrConstant = parts[2];
                     if (valueVarOrConstant.matches("\\d+")) {
                         int contant = Integer.parseInt(valueVarOrConstant);
-                        if (variableStates.containsKey(pointerVar) && variableStates.get(pointerVar).getPointsTo() != null) {
-                            String pointedVar = variableStates.get(pointerVar).getPointsTo();
-                            if (addressTakenVariables.contains(pointedVar) || allVars.contains(pointedVar)) {
-                                variableStates.get(pointedVar).setConstantValue(contant);
-                            }
-                            for(String addVar : addressTakenVarInit.keySet()){
-                                if (variableStates.get(addVar).isInt() && postState.containsKey(addVar)){
-                                    postState.get(addVar).setConstantValue(contant);
-                                }
-                            }
-                            if(postState.containsKey(pointedVar)){
-                                postState.get(pointedVar).markAsTop();
-                            }
+                        for(String addVar : addressTakenVarInit.keySet()){
+                            VariableState newState = new VariableState();
+                            newState.setConstantValue(contant);
+                            VariableState mergeVar = postState.get(addVar).join(newState);
+                            postState.put(addVar, mergeVar);
                         }
-                    } else if (variableStates.containsKey(valueVarOrConstant)) {
-                        VariableState valueState = variableStates.get(valueVarOrConstant);
-                        if (variableStates.containsKey(pointerVar) && variableStates.get(pointerVar).getPointsTo() != null) {
-                            String pointedVar = variableStates.get(pointerVar).getPointsTo();
-                            if (addressTakenVariables.contains(pointedVar)) {
-                                variableStates.get(pointedVar).weakUpdate(valueState);
-                            }
-                            if(postState.containsKey(pointedVar)){
-                                postState.get(pointedVar).markAsTop();
-                            }
+                    } else if (postState.containsKey(valueVarOrConstant)) {
+                        VariableState valueState = postState.get(valueVarOrConstant);
+                        for(String addVar : addressTakenVarInit.keySet()){
+                            VariableState mergeVar = postState.get(addVar).join(valueState);
+                            postState.put(addVar, mergeVar);
                         }
                     }
                     break;
@@ -261,10 +248,6 @@ public class DataFlowConstants {
                                     for(String updateVar : addressTakenVarInit.keySet()){
                                         postState.get(updateVar).markAsTop();
                                     }
-                                }else if(postState.containsKey(varName)){
-                                    for(String updateVar : addressTakenVarInit.keySet()){
-                                        postState.get(updateVar).markAsTop();
-                                    }
                                 }
                             }
                         }
@@ -291,10 +274,6 @@ public class DataFlowConstants {
                                     for(String updateVar : addressTakenVarInit.keySet()){
                                         postState.get(updateVar).markAsTop();
                                     }
-                                }else if(postState.containsKey(varName)){
-                                    for(String updateVar : addressTakenVarInit.keySet()){
-                                        postState.get(updateVar).markAsTop();
-                                    }
                                 }
                             }
                         }
@@ -318,10 +297,6 @@ public class DataFlowConstants {
                             if(variableStates.containsKey(varName)) {
                                 String pointedVar = variableStates.get(varName).getPointsTo();
                                 if (pointedVar !=null && (postState.containsKey(pointedVar) || pointedVar.contains("int"))) {
-                                    for(String updateVar : addressTakenVarInit.keySet()){
-                                        postState.get(updateVar).markAsTop();
-                                    }
-                                }else if(postState.containsKey(varName)){
                                     for(String updateVar : addressTakenVarInit.keySet()){
                                         postState.get(updateVar).markAsTop();
                                     }
