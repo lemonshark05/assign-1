@@ -18,7 +18,7 @@ public class DataFlowConstants {
     }
 
     static Set<String> addressTakenVariables = new HashSet<>();
-    static Set<String> addressTakenVarInit = new HashSet<>();
+    static Map<String, VariableState> addressTakenVarInit = new TreeMap<>();
     static Set<String> allVars = new HashSet<>();
 
     static Set<String> globalIntVars = new HashSet<>();
@@ -39,7 +39,15 @@ public class DataFlowConstants {
 
     public static void dataFlow(String filePath, String functionName) {
         parseLirFile(filePath, functionName);
-        parseCallInstruction(filePath, functionName);
+        for(String varName: addressTakenVariables){
+            VariableState thisVar = variableStates.get(varName);
+            if (thisVar.isInt()) {
+                VariableState newState = new VariableState();
+                newState.setInt(true);
+                newState.markAsTop();
+                addressTakenVarInit.put(varName, newState);
+            }
+        }
         for (String blockName : blockVars.keySet()) {
             TreeMap<String, VariableState> initialStates = new TreeMap<>();
             TreeMap<String, String> varsInBlock = blockVars.get(blockName);
@@ -53,13 +61,16 @@ public class DataFlowConstants {
                 }
                 initialStates.put(varName, newState);
             }
-            if(!blockName.equals("entry")) {
-                for (String addTVar : addressTakenVarInit) {
-                    VariableState newState = variableStates.get(addTVar).clone();
-                    newState.markAsTop();
-                    initialStates.put(addTVar, newState);
+
+            if(blockName.equals("entry")){
+                for (String addTVar : addressTakenVarInit.keySet()) {
+                    VariableState initState = new VariableState();
+                    initState.markAsBottom();
+                    initState.setInt(true);
+                    initialStates.put(addTVar, initState);
                 }
             }
+
             for(String globalVar : globalIntVars){
                 VariableState newState = new VariableState();
                 newState.setInt(true);
@@ -150,10 +161,16 @@ public class DataFlowConstants {
                     String pointerVar = parts[1];
                     String valueVarOrConstant = parts[2];
                     if (valueVarOrConstant.matches("\\d+")) {
+                        int contant = Integer.parseInt(valueVarOrConstant);
                         if (variableStates.containsKey(pointerVar) && variableStates.get(pointerVar).getPointsTo() != null) {
                             String pointedVar = variableStates.get(pointerVar).getPointsTo();
                             if (addressTakenVariables.contains(pointedVar) || allVars.contains(pointedVar)) {
-                                variableStates.get(pointedVar).setConstantValue(Integer.parseInt(valueVarOrConstant));
+                                variableStates.get(pointedVar).setConstantValue(contant);
+                            }
+                            for(String addVar : addressTakenVarInit.keySet()){
+                                if (variableStates.get(addVar).isInt() && postState.containsKey(addVar)){
+                                    postState.get(addVar).setConstantValue(contant);
+                                }
                             }
                             if(postState.containsKey(pointedVar)){
                                 postState.get(pointedVar).markAsTop();
@@ -240,8 +257,14 @@ public class DataFlowConstants {
                             String varName = var.trim();
                             if(variableStates.containsKey(varName)) {
                                 String pointedVar = variableStates.get(varName).getPointsTo();
-                                if (pointedVar !=null && postState.containsKey(pointedVar)) {
-                                    postState.get(pointedVar).markAsTop();
+                                if (pointedVar !=null && (postState.containsKey(pointedVar) || pointedVar.contains("int"))) {
+                                    for(String updateVar : addressTakenVarInit.keySet()){
+                                        postState.get(updateVar).markAsTop();
+                                    }
+                                }else if(postState.containsKey(varName)){
+                                    for(String updateVar : addressTakenVarInit.keySet()){
+                                        postState.get(updateVar).markAsTop();
+                                    }
                                 }
                             }
                         }
@@ -264,10 +287,14 @@ public class DataFlowConstants {
                             String varName = var.trim();
                             if(variableStates.containsKey(varName)) {
                                 String pointedVar = variableStates.get(varName).getPointsTo();
-                                if (pointedVar !=null && postState.containsKey(pointedVar)) {
-                                    postState.get(pointedVar).markAsTop();
-                                }else if(postState.containsKey(varName) && addressTakenVariables.contains(varName)){
-                                    postState.get(varName).markAsTop();
+                                if (pointedVar !=null && (postState.containsKey(pointedVar) || pointedVar.contains("int"))) {
+                                    for(String updateVar : addressTakenVarInit.keySet()){
+                                        postState.get(updateVar).markAsTop();
+                                    }
+                                }else if(postState.containsKey(varName)){
+                                    for(String updateVar : addressTakenVarInit.keySet()){
+                                        postState.get(updateVar).markAsTop();
+                                    }
                                 }
                             }
                         }
@@ -290,8 +317,14 @@ public class DataFlowConstants {
                             String varName = var.trim();
                             if(variableStates.containsKey(varName)) {
                                 String pointedVar = variableStates.get(varName).getPointsTo();
-                                if (pointedVar !=null && postState.containsKey(pointedVar)) {
-                                    postState.get(pointedVar).markAsTop();
+                                if (pointedVar !=null && (postState.containsKey(pointedVar) || pointedVar.contains("int"))) {
+                                    for(String updateVar : addressTakenVarInit.keySet()){
+                                        postState.get(updateVar).markAsTop();
+                                    }
+                                }else if(postState.containsKey(varName)){
+                                    for(String updateVar : addressTakenVarInit.keySet()){
+                                        postState.get(updateVar).markAsTop();
+                                    }
                                 }
                             }
                         }
@@ -490,66 +523,6 @@ public class DataFlowConstants {
         }
     }
 
-    private static void parseCallInstruction(String filePath, String functionName) {
-        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
-            String currentBlock = null;
-            boolean isFunction = false;
-            boolean isStruct = false;
-
-            String line;
-            while ((line = reader.readLine()) != null) {
-                line = line.trim();
-                if(line.length() == 0) continue;
-                if (line.startsWith("fn "+functionName)) {
-                    isFunction = true;
-                } else if (isFunction && line.startsWith("}")) {
-                    isFunction = false;
-                    currentBlock = null;
-                } else if(line.startsWith("struct ")){
-                    isStruct = true;
-                } else if(isStruct && line.startsWith("}")) {
-                    isStruct = false;
-                } else if (isFunction) {
-                    if(line.contains("call")){
-                        if(line.contains("(") && line.contains(")")) {
-                            String paramSubstring = line.substring(line.indexOf('(') + 1, line.indexOf(')'));
-                            StringBuilder transformedPart = new StringBuilder();
-                            int parenthesisLevel = 0;
-                            for (char c : paramSubstring.toCharArray()) {
-                                if (c == '(') {
-                                    parenthesisLevel++;
-                                } else if (c == ')') {
-                                    parenthesisLevel--;
-                                } else if (c == ',' && parenthesisLevel > 0) {
-                                    c = '|';
-                                }
-                                transformedPart.append(c);
-                            }
-                            String[] parts = transformedPart.toString().split(" ");
-                            for (int i = 0; i < parts.length; i++) {
-                                String varName = parts[i].trim();
-                                if (variableStates.containsKey(varName)) {
-                                    VariableState thisVar = variableStates.get(varName);
-//                                    if (thisVar.isInt()) {
-//                                        addressTakenVarInit.add(varName);
-//                                    }
-                                    if (thisVar.pointsTo != null) {
-                                        String pointedVar = thisVar.pointsTo;
-                                        if (variableStates.get(pointedVar) != null) {
-                                            addressTakenVarInit.add(pointedVar);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
     private static void parseLirFile(String filePath, String functionName) {
         try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
             String currentBlock = null;
@@ -661,9 +634,8 @@ public class DataFlowConstants {
                         }
                         if (parts.length > 3) {
                             String address = parts[0];
-                            String pointTo = parts[3];
-                            variableStates.get(address).setPointsTo(pointTo);
                             String addressTakenVar = parts[3];
+                            variableStates.get(address).setPointsTo(addressTakenVar);
                             addressTakenVariables.add(addressTakenVar);
                         }
                     } else {
@@ -671,8 +643,11 @@ public class DataFlowConstants {
                         String[] parts = line.split(" ");
                         for (int i = 0; i < parts.length; i++) {
                             String part = parts[i];
-                            if (variableStates.containsKey(part) && variableStates.get(part).isInt()) {
-                                varsInBlock.put(part, "");
+                            if (variableStates.containsKey(part)) {
+                                VariableState thisVar = variableStates.get(part);
+                                if(thisVar.isInt()) {
+                                    varsInBlock.put(part, "");
+                                }
                             }
                         }
                         if (currentBlock != null) {
