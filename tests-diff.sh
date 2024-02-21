@@ -13,7 +13,7 @@ for file in "$TEST_DIR"/*.lir; do
     mkdir -p "$output_dir"
 
     json_file="$output_dir/${filename}.lir.json"
-    stats_file="${file%.lir}.constants.soln"
+    stats_file="${file%.lir}.intervals.soln"
     output_stats="$output_dir/my-$filename"
     diff_output="$output_dir/diff.txt"
 

@@ -204,10 +204,10 @@ the following files:
 - `foo.intervals.soln` is the expected result for the intervals analysis for the
   `main` function.
 
-The autograder will use a different test suite based on randomly-generated tests
-(it uses 721 tests).  When you submit your assignment, you'll get the first
-failing test for each category.  I encourage you to write your own tests, and
-build a test suite collectively.  Sharing tests is **OK** in this course.
+The autograder will use a different test suite based on randomly-generated cases
+(it uses 721 cases).  When you submit your assignment, you'll get the first
+failing test for each category.  I encourage you to write your own cases, and
+build a test suite collectively.  Sharing cases is **OK** in this course.
 
 ## Grading
 
@@ -226,7 +226,7 @@ will be:
 
 Each of these categories will have a test suite of LIR programs that will be
 used to test your submission on that category for the given analysis. You must
-get all tests in a given test suite correct in order to receive points for the
+get all cases in a given test suite correct in order to receive points for the
 corresponding category (there is no partial credit _within a category_). You are
 encouraged to focus on one category at a time and get it fully correct before
 moving on to the next. Remember that you can also create your own test programs

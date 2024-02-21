@@ -91,12 +91,18 @@ public class DataFlowConstants {
 
         while (!worklist.isEmpty()) {
             String block = worklist.poll();
+            if(block.equals("bb6")){
+                String a = block;
+            }
 //            System.out.println("Poll Worklist: " + worklist.toString());
             TreeMap<String, VariableState> preState = preStates.get(block);
             TreeMap<String, VariableState> postState = analyzeBlock(block, preState, processedBlocks);
             postStates.put(block, postState);
 
             for (String successor : blockSuccessors.getOrDefault(block, new LinkedList<>())) {
+                if(successor.equals("bb6")){
+                    String a = successor;
+                }
                 TreeMap<String, VariableState> successorPreState = preStates.get(successor);
                 TreeMap<String, VariableState> joinedState = joinMaps(successorPreState, postState);
                 if (!joinedState.equals(successorPreState) || postState.isEmpty()) {
@@ -164,6 +170,7 @@ public class DataFlowConstants {
                         int contant = Integer.parseInt(valueVarOrConstant);
                         for(String addVar : addressTakenVarInit.keySet()){
                             VariableState newState = new VariableState();
+                            newState.setInt(true);
                             newState.setConstantValue(contant);
                             VariableState mergeVar = postState.get(addVar).join(newState);
                             postState.put(addVar, mergeVar);
@@ -211,6 +218,7 @@ public class DataFlowConstants {
                             copiedState = variableStates.get(copiedVar);
                         }
                         if (copiedState != null) {
+                            VariableState mergeVar = updateVar.join(copiedState);
                             if (copiedState.getPointsTo() != null) {
                                 updateVar.setPointsTo(copiedState.getPointsTo());
                             } else if (copiedState.isInt() && copiedState.hasConstantValue()) {
@@ -244,7 +252,7 @@ public class DataFlowConstants {
                             String varName = var.trim();
                             if(variableStates.containsKey(varName)) {
                                 String pointedVar = variableStates.get(varName).getPointsTo();
-                                if (pointedVar !=null && (postState.containsKey(pointedVar) || pointedVar.contains("int"))) {
+                                if (pointedVar !=null) {
                                     for(String updateVar : addressTakenVarInit.keySet()){
                                         postState.get(updateVar).markAsTop();
                                     }
@@ -270,7 +278,7 @@ public class DataFlowConstants {
                             String varName = var.trim();
                             if(variableStates.containsKey(varName)) {
                                 String pointedVar = variableStates.get(varName).getPointsTo();
-                                if (pointedVar !=null && (postState.containsKey(pointedVar) || pointedVar.contains("int"))) {
+                                if (pointedVar !=null) {
                                     for(String updateVar : addressTakenVarInit.keySet()){
                                         postState.get(updateVar).markAsTop();
                                     }
@@ -296,7 +304,7 @@ public class DataFlowConstants {
                             String varName = var.trim();
                             if(variableStates.containsKey(varName)) {
                                 String pointedVar = variableStates.get(varName).getPointsTo();
-                                if (pointedVar !=null && (postState.containsKey(pointedVar) || pointedVar.contains("int"))) {
+                                if (pointedVar !=null) {
                                     for(String updateVar : addressTakenVarInit.keySet()){
                                         postState.get(updateVar).markAsTop();
                                     }
@@ -611,7 +619,9 @@ public class DataFlowConstants {
                             String address = parts[0];
                             String addressTakenVar = parts[3];
                             variableStates.get(address).setPointsTo(addressTakenVar);
-                            addressTakenVariables.add(addressTakenVar);
+                            if(variableStates.containsKey(addressTakenVar)) {
+                                addressTakenVariables.add(addressTakenVar);
+                            }
                         }
                     } else {
                         TreeMap<String, String> varsInBlock = blockVars.get(currentBlock);

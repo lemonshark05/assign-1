@@ -611,7 +611,9 @@ public class DataFlowInterval {
                             String address = parts[0];
                             String addressTakenVar = parts[3];
                             variableStates.get(address).setPointsTo(addressTakenVar);
-                            addressTakenVariables.add(addressTakenVar);
+                            if(variableStates.containsKey(addressTakenVar)) {
+                                addressTakenVariables.add(addressTakenVar);
+                            }
                         }
                     } else {
                         TreeMap<String, String> varsInBlock = blockVars.get(currentBlock);
@@ -710,9 +712,9 @@ public class DataFlowInterval {
                 // Print the variable name and its state
                 if (varState.isInt()) {
                     if (varState.isTop()) {
-                        System.out.println(varName + " -> Top");
+                        System.out.println(varName + " -> (NegInf, PosInf)");
                     } else if (varState.hasConstantValue()) {
-                        System.out.println(varName + " -> " + varState.getConstantValue());
+                        System.out.println(varName + " -> [" + varState.getConstantValue()+", "+  + varState.getConstantValue()+"]");
                     }
                 }
             }
