@@ -1,4 +1,3 @@
-import javax.swing.*;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -19,6 +18,7 @@ public class DataFlowConstants {
     }
 
     static Set<String> addressTakenVariables = new HashSet<>();
+    static Set<String> addressTakenVarInit = new HashSet<>();
     static Set<String> allVars = new HashSet<>();
 
     static Set<String> globalIntVars = new HashSet<>();
@@ -39,6 +39,7 @@ public class DataFlowConstants {
 
     public static void dataFlow(String filePath, String functionName) {
         parseLirFile(filePath, functionName);
+        parseCallInstruction(filePath, functionName);
         for (String blockName : blockVars.keySet()) {
             TreeMap<String, VariableState> initialStates = new TreeMap<>();
             TreeMap<String, String> varsInBlock = blockVars.get(blockName);
@@ -51,6 +52,13 @@ public class DataFlowConstants {
                     newState.markAsBottom();
                 }
                 initialStates.put(varName, newState);
+            }
+            if(!blockName.equals("entry")) {
+                for (String addTVar : addressTakenVarInit) {
+                    VariableState newState = variableStates.get(addTVar).clone();
+                    newState.markAsTop();
+                    initialStates.put(addTVar, newState);
+                }
             }
             for(String globalVar : globalIntVars){
                 VariableState newState = new VariableState();
@@ -248,6 +256,22 @@ public class DataFlowConstants {
                     if(postState.get(leftVar)!=null) {
                         postState.get(leftVar).markAsTop();
                     }
+                    if (instruction.contains("(") && instruction.contains(")")) {
+                        String argumentsSubstring = instruction.substring(instruction.indexOf('(') + 1, instruction.indexOf(')'));
+                        String[] argumentVars = argumentsSubstring.split(",");
+
+                        for (String var : argumentVars) {
+                            String varName = var.trim();
+                            if(variableStates.containsKey(varName)) {
+                                String pointedVar = variableStates.get(varName).getPointsTo();
+                                if (pointedVar !=null && postState.containsKey(pointedVar)) {
+                                    postState.get(pointedVar).markAsTop();
+                                }else if(postState.containsKey(varName) && addressTakenVariables.contains(varName)){
+                                    postState.get(varName).markAsTop();
+                                }
+                            }
+                        }
+                    }
                     if (instruction.contains("then")) {
                         String targetBlock = instruction.substring(instruction.lastIndexOf("then") + 5).trim();
                         worklist.add(targetBlock);
@@ -264,7 +288,12 @@ public class DataFlowConstants {
 
                         for (String var : argumentVars) {
                             String varName = var.trim();
-
+                            if(variableStates.containsKey(varName)) {
+                                String pointedVar = variableStates.get(varName).getPointsTo();
+                                if (pointedVar !=null && postState.containsKey(pointedVar)) {
+                                    postState.get(pointedVar).markAsTop();
+                                }
+                            }
                         }
                     }
                     if (instruction.contains("then")) {
@@ -457,6 +486,66 @@ public class DataFlowConstants {
                 }
             }
         } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void parseCallInstruction(String filePath, String functionName) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+            String currentBlock = null;
+            boolean isFunction = false;
+            boolean isStruct = false;
+
+            String line;
+            while ((line = reader.readLine()) != null) {
+                line = line.trim();
+                if(line.length() == 0) continue;
+                if (line.startsWith("fn "+functionName)) {
+                    isFunction = true;
+                } else if (isFunction && line.startsWith("}")) {
+                    isFunction = false;
+                    currentBlock = null;
+                } else if(line.startsWith("struct ")){
+                    isStruct = true;
+                } else if(isStruct && line.startsWith("}")) {
+                    isStruct = false;
+                } else if (isFunction) {
+                    if(line.contains("call")){
+                        if(line.contains("(") && line.contains(")")) {
+                            String paramSubstring = line.substring(line.indexOf('(') + 1, line.indexOf(')'));
+                            StringBuilder transformedPart = new StringBuilder();
+                            int parenthesisLevel = 0;
+                            for (char c : paramSubstring.toCharArray()) {
+                                if (c == '(') {
+                                    parenthesisLevel++;
+                                } else if (c == ')') {
+                                    parenthesisLevel--;
+                                } else if (c == ',' && parenthesisLevel > 0) {
+                                    c = '|';
+                                }
+                                transformedPart.append(c);
+                            }
+                            String[] parts = transformedPart.toString().split(" ");
+                            for (int i = 0; i < parts.length; i++) {
+                                String varName = parts[i].trim();
+                                if (variableStates.containsKey(varName)) {
+                                    VariableState thisVar = variableStates.get(varName);
+//                                    if (thisVar.isInt()) {
+//                                        addressTakenVarInit.add(varName);
+//                                    }
+                                    if (thisVar.pointsTo != null) {
+                                        String pointedVar = thisVar.pointsTo;
+                                        if (variableStates.get(pointedVar) != null) {
+                                            addressTakenVarInit.add(pointedVar);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
