@@ -18,7 +18,7 @@ public class DataFlowInterval {
     }
 
     static Set<String> addressTakenVariables = new HashSet<>();
-    static Map<String, VariableState> addressTakenVarInit = new TreeMap<>();
+    static Map<String, VarInterval> addressTakenVarInit = new TreeMap<>();
     static Set<String> allVars = new HashSet<>();
 
     static Set<String> globalIntVars = new HashSet<>();
@@ -28,43 +28,64 @@ public class DataFlowInterval {
     static Map<String, List<String>> blockSuccessors = new HashMap<>();
 
     static Map<String, TreeMap<String, String>> blockVars = new HashMap<>();
-    static Map<String, VariableState> variableStates = new TreeMap<>();
+    static Map<String, VarInterval> varIntervals = new TreeMap<>();
     static Set<String> processedBlocks = new HashSet<>();
 
     static Queue<String> worklist = new PriorityQueue<>();
 
-    static TreeMap<String, TreeMap<String, VariableState>> preStates = new TreeMap<>();
-    static TreeMap<String, TreeMap<String, VariableState>> postStates = new TreeMap<>();
+    static TreeMap<String, TreeMap<String, VarInterval>> preStates = new TreeMap<>();
+    static TreeMap<String, TreeMap<String, VarInterval>> postStates = new TreeMap<>();
 
+    static Set<String> visited = new HashSet<>();
+    static Set<String> loopHeaders = new HashSet<>();
+    static LinkedList<String> stack = new LinkedList<>();
+
+    private static void dfs(String block) {
+        if (visited.contains(block)) {
+            return;
+        }
+        visited.add(block);
+        stack.push(block);
+
+        for (String successor : blockSuccessors.getOrDefault(block, new ArrayList<>())) {
+            if (stack.contains(successor)) {
+                loopHeaders.add(successor);
+            } else {
+                dfs(successor);
+            }
+        }
+        stack.pop();
+    }
+
+    private static void getLoopHeaders() {
+        dfs("entry");
+    }
 
     public static void dataFlow(String filePath, String functionName) {
         parseLirFile(filePath, functionName);
+        getLoopHeaders();
         for(String varName: addressTakenVariables){
-            VariableState thisVar = variableStates.get(varName);
+            VarInterval thisVar = varIntervals.get(varName);
             if (thisVar.isInt()) {
-                VariableState newState = new VariableState();
+                VarInterval newState = new VarInterval();
                 newState.setInt(true);
                 newState.markAsTop();
                 addressTakenVarInit.put(varName, newState);
             }
         }
         for (String blockName : blockVars.keySet()) {
-            TreeMap<String, VariableState> initialStates = new TreeMap<>();
+            TreeMap<String, VarInterval> initialStates = new TreeMap<>();
             TreeMap<String, String> varsInBlock = blockVars.get(blockName);
             for (Map.Entry<String, String> entry : varsInBlock.entrySet()) {
                 String varName = entry.getKey();
-                VariableState newState = variableStates.get(varName).clone();
-//                if(blockName.equals("entry") && addressTakenVarInit.get(varName) != null){
-//                    newState.markAsTop();
-//                }else {
+                VarInterval newState = varIntervals.get(varName).clone();
                 newState.markAsBottom();
-//                }
                 initialStates.put(varName, newState);
             }
 
             if(blockName.equals("entry")){
                 for (String addTVar : addressTakenVarInit.keySet()) {
-                    VariableState initState = new VariableState();
+                    VarInterval initState = new VarInterval();
                     initState.markAsBottom();
                     initState.setInt(true);
                     initialStates.put(addTVar, initState);
@@ -72,7 +93,7 @@ public class DataFlowInterval {
             }
 
             for(String globalVar : globalIntVars){
-                VariableState newState = new VariableState();
+                VarInterval newState = new VarInterval();
                 newState.setInt(true);
                 newState.markAsTop();
                 initialStates.put(globalVar, newState);
@@ -80,9 +101,9 @@ public class DataFlowInterval {
             preStates.put(blockName, initialStates);
         }
 
-        TreeMap<String, VariableState> entryStates = preStates.get("entry");
+        TreeMap<String, VarInterval> entryStates = preStates.get("entry");
         for (String param : localIntParams) {
-            VariableState newState = variableStates.get(param).clone();
+            VarInterval newState = varIntervals.get(param).clone();
             entryStates.put(param, newState);
         }
 
@@ -92,13 +113,13 @@ public class DataFlowInterval {
         while (!worklist.isEmpty()) {
             String block = worklist.poll();
 //            System.out.println("Poll Worklist: " + worklist.toString());
-            TreeMap<String, VariableState> preState = preStates.get(block);
-            TreeMap<String, VariableState> postState = analyzeBlock(block, preState, processedBlocks);
+            TreeMap<String, VarInterval> preState = preStates.get(block);
+            TreeMap<String, VarInterval> postState = analyzeBlock(block, preState, processedBlocks);
             postStates.put(block, postState);
 
             for (String successor : blockSuccessors.getOrDefault(block, new LinkedList<>())) {
-                TreeMap<String, VariableState> successorPreState = preStates.get(successor);
-                TreeMap<String, VariableState> joinedState = joinMaps(successorPreState, postState);
+                TreeMap<String, VarInterval> successorPreState = preStates.get(successor);
+                TreeMap<String, VarInterval> joinedState = joinMaps(successorPreState, postState);
                 if (!joinedState.equals(successorPreState) || postState.isEmpty()) {
                     preStates.put(successor, joinedState);
                     if (!worklist.contains(successor)) {
@@ -116,27 +137,44 @@ public class DataFlowInterval {
         printAnalysisResults(processedBlocks, postStates);
     }
 
-    private static TreeMap<String, VariableState> analyzeBlock(String block, TreeMap<String, VariableState> pState, Set<String> processedBlocks) {
-        TreeMap<String, VariableState> postState = new TreeMap<>();
-        for (Map.Entry<String, VariableState> entry : pState.entrySet()) {
-            VariableState newState = entry.getValue().clone();
+    private static TreeMap<String, VarInterval> analyzeBlock(String block, TreeMap<String, VarInterval> pState, Set<String> processedBlocks) {
+        TreeMap<String, VarInterval> postState = new TreeMap<>();
+        for (Map.Entry<String, VarInterval> entry : pState.entrySet()) {
+            VarInterval newState = entry.getValue().clone();
             postState.put(entry.getKey(), newState);
         }
         for (Operation operation : basicBlocks.get(block)) {
             analyzeInstruction(postState, processedBlocks ,operation);
         }
+        if (loopHeaders.contains(block)) {
+            for (Map.Entry<String, VarInterval> entry : postState.entrySet()) {
+                String varName = entry.getKey();
+                if(varName.equals("i")){
+                    String a = "";
+                }
+                Interval currentInterval = entry.getValue().getInterval();
+                Interval prevStateInterval = pState.get(varName).getInterval();
+                Interval widenedInterval = currentInterval.widen(prevStateInterval);
+                postState.get(varName).setInterval(widenedInterval);
+            }
+        }
         return postState;
     }
 
-    private static TreeMap<String, VariableState> joinMaps(TreeMap<String, VariableState> map1, TreeMap<String, VariableState> map2) {
-        TreeMap<String, VariableState> result = new TreeMap<>(map1);
+    private static TreeMap<String, VarInterval> joinMaps(TreeMap<String, VarInterval> map1, TreeMap<String, VarInterval> map2) {
+        TreeMap<String, VarInterval> result = new TreeMap<>(map1);
 
-        for (Map.Entry<String, VariableState> entry : map2.entrySet()) {
+        for (Map.Entry<String, VarInterval> entry : map1.entrySet()) {
+            VarInterval newState = entry.getValue().clone();
+            result.put(entry.getKey(), newState);
+        }
+
+        for (Map.Entry<String, VarInterval> entry : map2.entrySet()) {
             String varName = entry.getKey();
-            VariableState stateFromMap2 = entry.getValue();
+            VarInterval stateFromMap2 = entry.getValue();
             if (result.containsKey(varName)) {
-                VariableState stateFromMap1 = result.get(varName);
-                VariableState mergedState = stateFromMap1.join(stateFromMap2);
+                VarInterval stateFromMap1 = result.get(varName);
+                VarInterval mergedState = stateFromMap1.join(stateFromMap2);
                 result.put(varName, mergedState);
 //                System.out.println("Merging state for variable '" + varName + "': " + stateFromMap1 + " ⊔ " + stateFromMap2 + " = " + mergedState);
             } else {
@@ -148,7 +186,7 @@ public class DataFlowInterval {
         return result;
     }
 
-    private static void analyzeInstruction(TreeMap<String, VariableState> postState, Set<String> processedBlocks, Operation operation) {
+    private static void analyzeInstruction(TreeMap<String, VarInterval> postState, Set<String> processedBlocks, Operation operation) {
         String instruction = operation.instruction;
         Pattern operationPattern = Pattern.compile("\\$(store|load|alloc|cmp|gep|copy|call_ext|addrof|arith|gfp|ret|call_dir|call_idr|jump|branch)");
         Matcher matcher = operationPattern.matcher(instruction);
@@ -163,29 +201,32 @@ public class DataFlowInterval {
                     if (valueVarOrConstant.matches("\\d+")) {
                         int contant = Integer.parseInt(valueVarOrConstant);
                         for(String addVar : addressTakenVarInit.keySet()){
-                            VariableState newState = new VariableState();
+                            VarInterval newState = new VarInterval();
+                            newState.setInt(true);
                             newState.setConstantValue(contant);
-                            VariableState mergeVar = postState.get(addVar).join(newState);
+                            VarInterval mergeVar = postState.get(addVar).join(newState);
                             postState.put(addVar, mergeVar);
                         }
                     } else if (postState.containsKey(valueVarOrConstant)) {
-                        VariableState valueState = postState.get(valueVarOrConstant);
+                        VarInterval valueState = postState.get(valueVarOrConstant);
                         for(String addVar : addressTakenVarInit.keySet()){
-                            VariableState mergeVar = postState.get(addVar).join(valueState);
+                            VarInterval mergeVar = postState.get(addVar).join(valueState);
                             postState.put(addVar, mergeVar);
                         }
                     }
                     break;
                 case "load":
                     if (postState.containsKey(leftVar)) {
-                        VariableState loadedState = postState.get(leftVar);
+                        VarInterval loadedState = postState.get(leftVar);
                         loadedState.markAsTop();
+                        loadedState.setInterval(new Interval(null, null));
                     }
                     break;
                 case "alloc":
                     if (postState.containsKey(leftVar)) {
-                        VariableState loadedState = postState.get(leftVar);
+                        VarInterval loadedState = postState.get(leftVar);
                         loadedState.markAsTop();
+                        loadedState.setInterval(new Interval(null, null));
                     }
                     break;
                 case "cmp":
@@ -197,18 +238,22 @@ public class DataFlowInterval {
                 case "gep":
                     if (postState.containsKey(leftVar)) {
                         postState.get(leftVar).markAsTop();
+                        postState.get(leftVar).setInterval(new Interval(null, null));
                     }
                     break;
                 case "copy":
+                    if(leftVar.equals("i")){
+                        String a = "";
+                    }
                     if (parts.length > 3) {
                         String copiedVar = parts[3];
-                        VariableState updateVar = postState.get(leftVar);
-                        VariableState copiedState = postState.get(copiedVar);
+                        VarInterval updateVar = postState.get(leftVar);
+                        VarInterval copiedState = postState.get(copiedVar);
                         if(updateVar == null){
-                            updateVar = variableStates.get(leftVar);
+                            updateVar = varIntervals.get(leftVar);
                         }
                         if(copiedState == null){
-                            copiedState = variableStates.get(copiedVar);
+                            copiedState = varIntervals.get(copiedVar);
                         }
                         if (copiedState != null) {
                             if (copiedState.getPointsTo() != null) {
@@ -219,6 +264,7 @@ public class DataFlowInterval {
                                 updateVar.markAsBottom();
                             }else {
                                 updateVar.markAsTop();
+                                updateVar.setInterval(new Interval(null, null));
                             }
                         } else {
                             try {
@@ -227,6 +273,7 @@ public class DataFlowInterval {
                             } catch (NumberFormatException e) {
                                 if(updateVar!=null) {
                                     updateVar.markAsTop();
+                                    updateVar.setInterval(new Interval(null, null));
                                 }
                             }
                         }
@@ -235,6 +282,7 @@ public class DataFlowInterval {
                 case "call_ext":
                     if(postState.get(leftVar)!=null) {
                         postState.get(leftVar).markAsTop();
+                        postState.get(leftVar).setInterval(new Interval(null, null));
                     }
                     if (instruction.contains("(") && instruction.contains(")")) {
                         String argumentsSubstring = instruction.substring(instruction.indexOf('(') + 1, instruction.indexOf(')'));
@@ -242,11 +290,12 @@ public class DataFlowInterval {
 
                         for (String var : argumentVars) {
                             String varName = var.trim();
-                            if(variableStates.containsKey(varName)) {
-                                String pointedVar = variableStates.get(varName).getPointsTo();
-                                if (pointedVar !=null && (postState.containsKey(pointedVar) || pointedVar.contains("int"))) {
+                            if(varIntervals.containsKey(varName)) {
+                                String pointedVar = varIntervals.get(varName).getPointsTo();
+                                if (pointedVar !=null) {
                                     for(String updateVar : addressTakenVarInit.keySet()){
                                         postState.get(updateVar).markAsTop();
+                                        postState.get(updateVar).setInterval(new Interval(null, null));
                                     }
                                 }
                             }
@@ -261,6 +310,7 @@ public class DataFlowInterval {
                 case "call_dir":
                     if(postState.get(leftVar)!=null) {
                         postState.get(leftVar).markAsTop();
+                        postState.get(leftVar).setInterval(new Interval(null, null));
                     }
                     if (instruction.contains("(") && instruction.contains(")")) {
                         String argumentsSubstring = instruction.substring(instruction.indexOf('(') + 1, instruction.indexOf(')'));
@@ -268,11 +318,12 @@ public class DataFlowInterval {
 
                         for (String var : argumentVars) {
                             String varName = var.trim();
-                            if(variableStates.containsKey(varName)) {
-                                String pointedVar = variableStates.get(varName).getPointsTo();
-                                if (pointedVar !=null && (postState.containsKey(pointedVar) || pointedVar.contains("int"))) {
+                            if(varIntervals.containsKey(varName)) {
+                                String pointedVar = varIntervals.get(varName).getPointsTo();
+                                if (pointedVar !=null) {
                                     for(String updateVar : addressTakenVarInit.keySet()){
                                         postState.get(updateVar).markAsTop();
+                                        postState.get(updateVar).setInterval(new Interval(null, null));
                                     }
                                 }
                             }
@@ -287,6 +338,7 @@ public class DataFlowInterval {
                 case "call_idr":
                     if(postState.get(leftVar)!=null) {
                         postState.get(leftVar).markAsTop();
+                        postState.get(leftVar).setInterval(new Interval(null, null));
                     }
                     if (instruction.contains("(") && instruction.contains(")")) {
                         String argumentsSubstring = instruction.substring(instruction.indexOf('(') + 1, instruction.indexOf(')'));
@@ -294,11 +346,12 @@ public class DataFlowInterval {
 
                         for (String var : argumentVars) {
                             String varName = var.trim();
-                            if(variableStates.containsKey(varName)) {
-                                String pointedVar = variableStates.get(varName).getPointsTo();
-                                if (pointedVar !=null && (postState.containsKey(pointedVar) || pointedVar.contains("int"))) {
+                            if(varIntervals.containsKey(varName)) {
+                                String pointedVar = varIntervals.get(varName).getPointsTo();
+                                if (pointedVar !=null) {
                                     for(String updateVar : addressTakenVarInit.keySet()){
                                         postState.get(updateVar).markAsTop();
+                                        postState.get(updateVar).setInterval(new Interval(null, null));
                                     }
                                 }
                             }
@@ -313,16 +366,16 @@ public class DataFlowInterval {
                 case "addrof":
                     if (parts.length > 2) {
                         String pointedVar = parts[3];
-                        variableStates.get(leftVar).setPointsTo(pointedVar);
+                        varIntervals.get(leftVar).setPointsTo(pointedVar);
                     }
                     break;
                 case "gfp":
                     if (postState.containsKey(leftVar)) {
                         postState.get(leftVar).markAsTop();
+                        postState.get(leftVar).setInterval(new Interval(null, null));
                     }
                     break;
                 case "jump":
-                    String targetBlockJump = extractTargetBlock(instruction);
                     break;
                 case "branch":
                     String condition = parts[1];
@@ -339,7 +392,7 @@ public class DataFlowInterval {
                             blockSuccessors.put(operation.block, newSuccessor);
                         }
                     } catch (NumberFormatException e) {
-                        VariableState conditionVar = postState.get(condition);
+                        VarInterval conditionVar = postState.get(condition);
                         if(conditionVar != null) {
                             if (conditionVar.isBottom()) {
                                 blockSuccessors.put(operation.block, newSuccessor);
@@ -366,8 +419,8 @@ public class DataFlowInterval {
         }
     }
 
-    private static String getAbstractValue(String operand, Map<String, VariableState> postStates) {
-        VariableState state =new VariableState();
+    private static String getAbstractValue(String operand, Map<String, VarInterval> postStates) {
+        VarInterval state =new VarInterval();
         try {
             int value = Integer.parseInt(operand);
             return value+"";
@@ -376,7 +429,7 @@ public class DataFlowInterval {
             if(postStates.containsKey(operand)) {
                 state = postStates.get(operand);
             }else{
-                state = variableStates.get(operand);
+                state = varIntervals.get(operand);
             }
             if(state.isTop){
                 return "T";
@@ -392,20 +445,44 @@ public class DataFlowInterval {
         return "";
     }
 
-    private static void handleArith(String[] parts, String leftVar, Map<String, VariableState> postStates) {
+    private static Interval getInterval(String operand, Map<String, VarInterval> postStates) {
+        Interval state =new Interval();
+        try {
+            int value = Integer.parseInt(operand);
+            state.setInterval(value, value);
+            return state;
+        } catch (NumberFormatException e) {
+            // Not an integer, so it should be a variable name
+            VarInterval newState = new VarInterval();
+            if(postStates.containsKey(operand)) {
+                newState = postStates.get(operand);
+            }else{
+                newState = varIntervals.get(operand);
+            }
+            state = newState.getInterval();
+        }
+        return state;
+    }
+
+    private static void handleArith(String[] parts, String leftVar, Map<String, VarInterval> postState) {
         if (parts.length < 5) return;
 
         if(leftVar.equals("_t7")){
             String a = leftVar;
         }
 
-        VariableState leftState = postStates.get(leftVar);
+        VarInterval leftState = postState.get(leftVar);
         String operation = parts[3];
         String operand1 = parts[4];
         String operand2 = parts[5];
 
-        String state1 = getAbstractValue(operand1, postStates);
-        String state2 = getAbstractValue(operand2, postStates);
+        String state1 = getAbstractValue(operand1, postState);
+        String state2 = getAbstractValue(operand2, postState);
+
+        Interval interval1 = getInterval(operand1, postState);
+        Interval interval2 = getInterval(operand2, postState);
+        Interval resultInterval = performArithInterval(operation, interval1, interval2);
+        leftState.setInterval(new Interval(resultInterval.getMin(), resultInterval.getMax()));
 
         if (state1.equals("B") || state2.equals("B")){
             leftState.markAsBottom();
@@ -415,6 +492,7 @@ public class DataFlowInterval {
         if(operation.equals("mul")){
             if(state1.equals("0") || state2.equals("0")){
                 leftState.setConstantValue(0);
+                leftState.setInterval(new Interval(0, 0));
                 return;
             }
         }
@@ -425,6 +503,7 @@ public class DataFlowInterval {
                 return;
             }else if(state1.equals("0")){
                 leftState.setConstantValue(0);
+                leftState.setInterval(new Interval(0, 0));
                 return;
             }
         }
@@ -450,14 +529,10 @@ public class DataFlowInterval {
         }
     }
 
-    private static void handleCmp(String[] parts, String leftVar, Map<String, VariableState> postStates) {
+    private static void handleCmp(String[] parts, String leftVar, Map<String, VarInterval> postStates) {
         if (parts.length < 5) return;
 
-        if(leftVar.equals("_t14")){
-            String a = leftVar;
-        }
-
-        VariableState leftState = postStates.get(leftVar);
+        VarInterval leftState = postStates.get(leftVar);
         String operation = parts[3];
         String operand1 = parts[4];
         String operand2 = parts[5];
@@ -468,7 +543,11 @@ public class DataFlowInterval {
         if (state1.equals(state2) && state1.equals("B")) {
             leftState.markAsBottom();
             return;
-        }else if(state1.equals(state2) && state1.equals("T")){
+        }
+
+        leftState.setInterval(new Interval(0, 1));
+
+        if(state1.equals(state2) && state1.equals("T")){
             leftState.markAsTop();
             return;
         }else if(state1.length() == 0){
@@ -531,7 +610,7 @@ public class DataFlowInterval {
                             String varName = parts[0].trim();
                             // just get int type
                             String type = parts[1].trim();
-                            VariableState newState = new VariableState();
+                            VarInterval newState = new VarInterval();
                             if (type.startsWith("&int")) {
                                 newState.setPointsTo(type.substring(1));
                             } else if (type.equals("int")) {
@@ -542,7 +621,7 @@ public class DataFlowInterval {
                             newState.markAsTop();
                             localIntParams.add(varName);
                             allVars.add(varName);
-                            variableStates.put(varName, newState);
+                            varIntervals.put(varName, newState);
                         }
                     }
                 } else if (isFunction && line.startsWith("}")) {
@@ -585,7 +664,7 @@ public class DataFlowInterval {
                             String varName = parts[0].trim();
                             // just get int type
                             String type = parts[1].trim();
-                            VariableState newState = new VariableState();
+                            VarInterval newState = new VarInterval();
                             if (type.startsWith("&int")) {
                                 newState.setPointsTo(type.substring(1));
                             }else if (type.equals("int")) {
@@ -594,7 +673,7 @@ public class DataFlowInterval {
                                 newState.setPointsTo(type.substring(1));
                             }
                             allVars.add(varName);
-                            variableStates.put(varName, newState);
+                            varIntervals.put(varName, newState);
                         }
                     } else if (line.contains("$addrof")) {
                         Operation newOp = new Operation(currentBlock, line);
@@ -603,15 +682,15 @@ public class DataFlowInterval {
                         TreeMap<String, String> varsInBlock = blockVars.get(currentBlock);
                         for (int i = 0; i < parts.length; i++) {
                             String part = parts[i];
-                            if (variableStates.containsKey(part) && variableStates.get(part).isInt()) {
+                            if (varIntervals.containsKey(part) && varIntervals.get(part).isInt()) {
                                 varsInBlock.put(part, "");
                             }
                         }
                         if (parts.length > 3) {
                             String address = parts[0];
                             String addressTakenVar = parts[3];
-                            variableStates.get(address).setPointsTo(addressTakenVar);
-                            if(variableStates.containsKey(addressTakenVar)) {
+                            varIntervals.get(address).setPointsTo(addressTakenVar);
+                            if(varIntervals.containsKey(addressTakenVar)) {
                                 addressTakenVariables.add(addressTakenVar);
                             }
                         }
@@ -620,8 +699,8 @@ public class DataFlowInterval {
                         String[] parts = line.split(" ");
                         for (int i = 0; i < parts.length; i++) {
                             String part = parts[i];
-                            if (variableStates.containsKey(part)) {
-                                VariableState thisVar = variableStates.get(part);
+                            if (varIntervals.containsKey(part)) {
+                                VarInterval thisVar = varIntervals.get(part);
                                 if(thisVar.isInt()) {
                                     varsInBlock.put(part, "");
                                 }
@@ -649,7 +728,99 @@ public class DataFlowInterval {
             e.printStackTrace();
         }
     }
+    private static Interval performArithInterval(String op, Interval val1, Interval val2) {
+        Interval result = new Interval(0,0);
+        if((val1.max == null && val1.min == null) || (val2.max == null && val2.min == null)){
+            result.setInterval(null, null);
+            return result;
+        }
+        switch (op) {
+            case "add":
+                return new Interval(safeAdd(val1.getMin(), val2.getMin()), safeAdd(val1.getMax(), val2.getMax()));
+            case "sub":
+                Integer v1 = safeSubtract(val1.getMin(), val2.getMax());
+                Integer v2 = safeSubtract(val1.getMax(), val2.getMin());
+                return new Interval(v1, v2);
+            case "mul":
+                Integer[] results = new Integer[]{
+                        safeMultiply(val1.getMin(), val2.getMin()),
+                        safeMultiply(val1.getMin(), val2.getMax()),
+                        safeMultiply(val1.getMax(), val2.getMin()),
+                        safeMultiply(val1.getMax(), val2.getMax())
+                };
+                Integer minResult = Arrays.stream(results).filter(Objects::nonNull).min(Integer::compare).orElse(null);
+                Integer maxResult = Arrays.stream(results).filter(Objects::nonNull).max(Integer::compare).orElse(null);
+                return new Interval(minResult, maxResult);
+            case "div":
+                if (val2.getMin() != null && val2.getMax() != null && val2.getMin().equals(0) && val2.getMax().equals(0)) {
+//                    result.markAsBottom();
+                    return result;
+                }
+                if (val2.getMin() != null && val2.getMax() != null && val2.getMin() < 0 && val2.getMax() > 0) {
+                    Interval adjustedVal2 = new Interval();
+                    if (Math.abs(val2.getMin()) < val2.getMax()) {
+                        adjustedVal2.setInterval(1, val2.getMax());
+                    } else {
+                        adjustedVal2.setInterval(val2.getMin(), -1);
+                    }
+                    return performDivision(val1, adjustedVal2);
+                } else if (val2.getMin() != null && val2.getMin().equals(0)) {
+                    // If I2.low is 0, adjust the interval to [1, I2.high]
+                    Interval newState = new Interval();
+                    newState.setInterval(1, val2.getMax());
+                    return performDivision(val1, newState);
+                } else if (val2.getMax() != null && val2.getMax().equals(0)) {
+                    // If I2.high is 0, adjust the interval to [I2.low, -1]
+                    Interval newState = new Interval();
+                    newState.setInterval(val2.getMin(), -1);
+                    return performDivision(val1, newState);
+                } else {
+                    return performDivision(val1, val2);
+                }
+            default:
+//                result.;
+                break;
+        }
+        return result;
+    }
 
+    private static Interval performDivision(Interval val1, Interval val2) {
+        Interval result = new Interval(0,0);
+        // Calculate all possible combinations of division and find min and max
+        List<Integer> possibleResults = new ArrayList<>();
+        if (val1.getMin() != null && val2.getMin() != null) possibleResults.add(val1.getMin() / val2.getMin());
+        if (val1.getMin() != null && val2.getMax() != null) possibleResults.add(val1.getMin() / val2.getMax());
+        if (val1.getMax() != null && val2.getMin() != null) possibleResults.add(val1.getMax() / val2.getMin());
+        if (val1.getMax() != null && val2.getMax() != null) possibleResults.add(val1.getMax() / val2.getMax());
+
+        possibleResults.removeIf(Objects::isNull);
+        if (!possibleResults.isEmpty()) {
+            result.setInterval(Collections.min(possibleResults), Collections.max(possibleResults));
+        } else {
+            result.isBottom();
+        }
+
+        return result;
+    }
+
+
+    private static Integer safeAdd(Integer a, Integer b) {
+        if (a == null || b == null) return null;
+        return a + b;
+    }
+    private static Integer safeSubtract(Integer a, Integer b) {
+        if (a == null || b == null) return null;
+        return a - b;
+    }
+
+    private static Integer safeMultiply(Integer a, Integer b) {
+        if (a == null || b == null) {
+            if (a == null && b == null) return null;
+            if (a == null) return (b == 0) ? 0 : null;
+            if (b == null) return (a == 0) ? 0 : null;
+        }
+        return a * b;
+    }
     private static Integer performArithmetic(String op, Integer val1, Integer val2) {
         switch (op) {
             case "add":
@@ -692,29 +863,36 @@ public class DataFlowInterval {
         return "";
     }
 
-    private static void printAnalysisResults(Set<String> processedBlocks, TreeMap<String, TreeMap<String, VariableState>> preStates) {
+    private static void printAnalysisResults(Set<String> processedBlocks, TreeMap<String, TreeMap<String, VarInterval>> preStates) {
         // Sort the basic block names alphabetically
         List<String> sortedProcessedBlocks = new ArrayList<>(processedBlocks);
         Collections.sort(sortedProcessedBlocks);
 
         for (String blockName : sortedProcessedBlocks) {
-            TreeMap<String, VariableState> varStates = preStates.get(blockName);
+            TreeMap<String, VarInterval> varStates = preStates.get(blockName);
             System.out.println(blockName + ":");
 
             if (varStates == null || varStates.isEmpty()) {
                 System.out.println();
                 continue;
             }
-            for (Map.Entry<String, VariableState> varEntry : varStates.entrySet()) {
+            for (Map.Entry<String, VarInterval> varEntry : varStates.entrySet()) {
                 String varName = varEntry.getKey();
-                VariableState varState = varEntry.getValue();
+                VarInterval varState = varEntry.getValue();
 
                 // Print the variable name and its state
-                if (varState.isInt()) {
-                    if (varState.isTop()) {
-                        System.out.println(varName + " -> (NegInf, PosInf)");
-                    } else if (varState.hasConstantValue()) {
-                        System.out.println(varName + " -> [" + varState.getConstantValue()+", "+  + varState.getConstantValue()+"]");
+                if (varState.isInt() && !varState.isBottom()) {
+                    Interval interval = varState.interval;
+                    if (!varState.isBottom()) {
+                        String left = "(NegInf";
+                        String right = "PosInf)";
+                        if(interval.getMin()!=null){
+                            left = "["+ interval.getMin();
+                        }
+                        if(interval.getMax()!=null){
+                            right = interval.getMax() + "]";
+                        }
+                        System.out.println(varName + " -> " + left +", "+ right);
                     }
                 }
             }
