@@ -1,0 +1,31 @@
+bb1:
+_lo1 -> [0, 1]
+_t2 -> (NegInf, PosInf)
+_t3 -> (NegInf, PosInf)
+_t4 -> (NegInf, PosInf)
+_t5 -> [-5, 5]
+id0 -> (NegInf, PosInf)
+
+bb2:
+_lo1 -> [0, 0]
+_t2 -> (NegInf, PosInf)
+_t3 -> (NegInf, PosInf)
+_t4 -> (NegInf, PosInf)
+_t5 -> [-5, 5]
+id0 -> (NegInf, PosInf)
+
+bb3:
+_lo1 -> [1, 1]
+_t2 -> (NegInf, PosInf)
+_t3 -> (NegInf, PosInf)
+_t4 -> (NegInf, PosInf)
+_t5 -> [-5, 5]
+id0 -> (NegInf, PosInf)
+
+entry:
+_t2 -> (NegInf, PosInf)
+_t3 -> (NegInf, PosInf)
+_t4 -> (NegInf, PosInf)
+_t5 -> [-5, 5]
+id0 -> (NegInf, PosInf)
+

@@ -1,6 +1,6 @@
 import java.util.Objects;
 
-class VarInterval{
+public class VarInterval{
     boolean isTop = false;
     Integer constantValue = null;
     String pointsTo = null;
@@ -90,7 +90,6 @@ class VarInterval{
         newState.setConstantValue(this.getConstantValue());
         newState.pointsTo = this.pointsTo;
         newState.isInt = this.isInt;
-        //let preState not change with postState
         newState.setInterval(new Interval(this.interval.getMin(), this.interval.getMax()));
         return newState;
     }
@@ -104,16 +103,6 @@ class VarInterval{
                 Objects.equals(constantValue, other.constantValue) &&
                 Objects.equals(pointsTo, other.pointsTo) &&
                 isInt == other.isInt;
-    }
-
-    void weakUpdate(VarInterval other) {
-        if (this.isTop || other.isTop) {
-            this.markAsTop();
-        } else if (this.constantValue != null && other.constantValue != null && !Objects.equals(this.constantValue, other.constantValue)) {
-            this.markAsTop();
-        } else if (this.pointsTo != null && other.pointsTo != null && !Objects.equals(this.pointsTo, other.pointsTo)) {
-            this.markAsTop();
-        }
     }
 
     public VarInterval join(VarInterval other) {

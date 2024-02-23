@@ -1,6 +1,6 @@
 #!/bin/bash
 
-TEST_DIR="./case2"
+TEST_DIR="./interval"
 OUTPUT_DIR="my-results"
 
 mkdir -p "$OUTPUT_DIR"
@@ -17,7 +17,7 @@ for file in "$TEST_DIR"/*.lir; do
     output_stats="$output_dir/my-$filename"
     diff_output="$output_dir/diff.txt"
 
-    ./run-constants-analysis.sh "$file" "$json_file" "test"> "$output_stats"
+    ./run-intervals-analysis.sh "$file" "$json_file" "test"> "$output_stats"
     diff -wp "$output_stats" "$stats_file" > "$diff_output"
 
     if [ -s "$diff_output" ]; then

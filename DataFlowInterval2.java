@@ -5,7 +5,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class DataFlowInterval {
+public class DataFlowInterval2 {
 
     static class Operation {
         String block;
@@ -17,7 +17,6 @@ public class DataFlowInterval {
         }
     }
 
-    static IntervalArithmetic arithmetic = new IntervalArithmetic();
     static Set<String> addressTakenVariables = new HashSet<>();
     static Map<String, VarInterval> addressTakenVarInit = new TreeMap<>();
     static Set<String> allVars = new HashSet<>();
@@ -113,21 +112,18 @@ public class DataFlowInterval {
 
         while (!worklist.isEmpty()) {
             String block = worklist.poll();
-            if(block.equals("bb5")){
-                String a = "";
-            }
 //            System.out.println("Poll Worklist: " + worklist.toString());
             TreeMap<String, VarInterval> preState = preStates.get(block);
             TreeMap<String, VarInterval> postState = analyzeBlock(block, preState, processedBlocks);
             postStates.put(block, postState);
-//            printVariableIntervals(block, "After Analysis", postState);
+            printVariableIntervals(block, "After Analysis", postState);
 
             for (String successor : blockSuccessors.getOrDefault(block, new LinkedList<>())) {
-                if(successor.equals("bb4")){
+                if(successor.equals("bb3")){
                     String a = "";
                 }
                 TreeMap<String, VarInterval> successorPreState = preStates.get(successor);
-//                printVariableIntervals(successor, "successorPreState", successorPreState);
+                printVariableIntervals(successor, "successorPreState", successorPreState);
 
                 TreeMap<String, VarInterval> newState = new TreeMap<>(successorPreState);
                 for (Map.Entry<String, VarInterval> entry : successorPreState.entrySet()) {
@@ -146,17 +142,17 @@ public class DataFlowInterval {
                             widenedInterval = originalVarState.getInterval().widen(prevStateInterval);
                             VarInterval widenedVarState = originalVarState.clone();
                             widenedVarState.setInterval(widenedInterval);
-                            successorPreState.put(varName, widenedVarState);
                             newState.put(varName, widenedVarState);
                         }
 
                     }
-//                    printVariableIntervals(successor, "After loopHeaders Widening", successorPreState);
+                    printVariableIntervals(successor, "After loopHeaders Widening", newState);
                 }
                 TreeMap<String, VarInterval> joinedState = joinMaps(newState, postState);
-                preStates.put(successor, joinedState);
-//                printVariableIntervals(successor, "After Joins PreStates", joinedState);
+                printVariableIntervals(successor, "After Joins PreStates", joinedState);
+
                 if (!joinedState.equals(successorPreState) || postState.isEmpty()) {
+                    preStates.put(successor, joinedState);
                     if (!worklist.contains(successor)) {
                         processedBlocks.add(successor);
                         worklist.add(successor);
@@ -286,7 +282,7 @@ public class DataFlowInterval {
                     }
                     break;
                 case "copy":
-                    if(leftVar.equals("id1")){
+                    if(leftVar.equals("i")){
                         String a = "";
                     }
                     if (parts.length > 3) {
@@ -309,8 +305,8 @@ public class DataFlowInterval {
                             }else {
                                 updateVar.markAsTop();
 //                                Interval merger = updateVar.interval.join(updateVar.interval, copiedState.interval);
+                                updateVar.setInterval(copiedState.getInterval());
                             }
-                            updateVar.setInterval(new Interval(copiedState.interval.getMin(), copiedState.interval.getMax()));
                         } else {
                             try {
                                 int value = Integer.parseInt(copiedVar);
@@ -512,7 +508,7 @@ public class DataFlowInterval {
     private static void handleArith(String[] parts, String leftVar, Map<String, VarInterval> postState) {
         if (parts.length < 5) return;
 
-        if(leftVar.equals("_t5")){
+        if(leftVar.equals("_t9")){
             String a = leftVar;
         }
 
@@ -526,7 +522,7 @@ public class DataFlowInterval {
 
         Interval interval1 = getInterval(operand1, postState);
         Interval interval2 = getInterval(operand2, postState);
-        Interval resultInterval = arithmetic.performArithInterval(operation, interval1, interval2);
+        Interval resultInterval = performArithInterval(operation, interval1, interval2);
         leftState.setInterval(new Interval(resultInterval.getMin(), resultInterval.getMax()));
 
         if (state1.equals("B") || state2.equals("B")){
@@ -773,7 +769,102 @@ public class DataFlowInterval {
             e.printStackTrace();
         }
     }
+    private static Interval performArithInterval(String op, Interval val1, Interval val2) {
+        Interval result = new Interval(0,0);
+        if((val1.max == null && val1.min == null) || (val2.max == null && val2.min == null)){
+            result.setInterval(null, null);
+            return result;
+        }
+        switch (op) {
+            case "add":
+                return new Interval(safeAdd(val1.getMin(), val2.getMin()), safeAdd(val1.getMax(), val2.getMax()));
+            case "sub":
+                Integer v1 = safeSubtract(val1.getMin(), val2.getMax());
+                Integer v2 = safeSubtract(val1.getMax(), val2.getMin());
+                return new Interval(v1, v2);
+            case "mul":
+                if ((val1.min == null || val1.max == null) || (val2.min == null || val2.max == null)) {
+                    return new Interval(null, null); // (-∞, +∞)
+                }
+                Integer[] results = new Integer[]{
+                        safeMultiply(val1.getMin(), val2.getMin()),
+                        safeMultiply(val1.getMin(), val2.getMax()),
+                        safeMultiply(val1.getMax(), val2.getMin()),
+                        safeMultiply(val1.getMax(), val2.getMax())
+                };
+                Integer minResult = Arrays.stream(results).filter(Objects::nonNull).min(Integer::compare).orElse(null);
+                Integer maxResult = Arrays.stream(results).filter(Objects::nonNull).max(Integer::compare).orElse(null);
+                return new Interval(minResult, maxResult);
+            case "div":
+                if (val2.getMin() != null && val2.getMax() != null && val2.getMin().equals(0) && val2.getMax().equals(0)) {
+//                    result.markAsBottom();
+                    return result;
+                }
+                if (val2.getMin() != null && val2.getMax() != null && val2.getMin() < 0 && val2.getMax() > 0) {
+                    Interval adjustedVal2 = new Interval();
+                    if (Math.abs(val2.getMin()) < val2.getMax()) {
+                        adjustedVal2.setInterval(1, val2.getMax());
+                    } else {
+                        adjustedVal2.setInterval(val2.getMin(), -1);
+                    }
+                    return performDivision(val1, adjustedVal2);
+                } else if (val2.getMin() != null && val2.getMin().equals(0)) {
+                    // If I2.low is 0, adjust the interval to [1, I2.high]
+                    Interval newState = new Interval();
+                    newState.setInterval(1, val2.getMax());
+                    return performDivision(val1, newState);
+                } else if (val2.getMax() != null && val2.getMax().equals(0)) {
+                    // If I2.high is 0, adjust the interval to [I2.low, -1]
+                    Interval newState = new Interval();
+                    newState.setInterval(val2.getMin(), -1);
+                    return performDivision(val1, newState);
+                } else {
+                    return performDivision(val1, val2);
+                }
+            default:
+//                result.;
+                break;
+        }
+        return result;
+    }
 
+    private static Interval performDivision(Interval val1, Interval val2) {
+        Interval result = new Interval(0,0);
+        // Calculate all possible combinations of division and find min and max
+        List<Integer> possibleResults = new ArrayList<>();
+        if (val1.getMin() != null && val2.getMin() != null) possibleResults.add(val1.getMin() / val2.getMin());
+        if (val1.getMin() != null && val2.getMax() != null) possibleResults.add(val1.getMin() / val2.getMax());
+        if (val1.getMax() != null && val2.getMin() != null) possibleResults.add(val1.getMax() / val2.getMin());
+        if (val1.getMax() != null && val2.getMax() != null) possibleResults.add(val1.getMax() / val2.getMax());
+
+        possibleResults.removeIf(Objects::isNull);
+        if (!possibleResults.isEmpty()) {
+            result.setInterval(Collections.min(possibleResults), Collections.max(possibleResults));
+        } else {
+            result.isBottom();
+        }
+
+        return result;
+    }
+
+
+    private static Integer safeAdd(Integer a, Integer b) {
+        if (a == null || b == null) return null;
+        return a + b;
+    }
+    private static Integer safeSubtract(Integer a, Integer b) {
+        if (a == null || b == null) return null;
+        return a - b;
+    }
+
+    private static Integer safeMultiply(Integer a, Integer b) {
+        if (a == null || b == null) {
+            if (a == null && b == null) return null;
+            if (a == null) return (b == 0) ? 0 : null;
+            if (b == null) return (a == 0) ? 0 : null;
+        }
+        return a * b;
+    }
     private static Integer performArithmetic(String op, Integer val1, Integer val2) {
         switch (op) {
             case "add":

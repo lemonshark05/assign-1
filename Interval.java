@@ -2,8 +2,6 @@ public class Interval {
     Integer min; // null represents -∞
     Integer max; // null represents ∞
 
-    Boolean isTop = false;
-
 
     // Constructor for non-empty intervals. Use null for -∞ or ∞
     public Interval(Integer low, Integer max) {
@@ -24,7 +22,6 @@ public class Interval {
     // Represents ⊤ ([-∞, ∞])
     public static Interval top() {
         Interval newIn = new Interval(null, null);
-        newIn.isTop = true;
         return newIn;
     }
 
@@ -52,6 +49,10 @@ public class Interval {
     // Check if the interval is ⊥
     public boolean isBottom() {
         return min != null && max != null && min > max;
+    }
+
+    public boolean isAll() {
+        return min == null && max == null;
     }
 
     // Join of two intervals

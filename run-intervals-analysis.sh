@@ -9,5 +9,5 @@ LIR_FILE="$1"
 JSON_FILE="$2"
 FUNCTION_NAME="$3"
 
-javac DataFlowInterval.java State.java VariableState.java
+javac DataFlowInterval.java State.java VarInterval.java IntervalArithmetic.java Interval.java
 java DataFlowInterval "$LIR_FILE" "$JSON_FILE" "$FUNCTION_NAME"
