@@ -45,7 +45,12 @@ class VarInterval{
 
     void setConstantValue(Integer value) {
         if(value != null) {
-            this.interval.setInterval(value, value);
+//            if(this.interval.isBottom() ) {
+//                this.interval.setInterval(value, value);
+//            }
+            if(!(this.interval.getMin() != null && this.interval.getMax() != null &&this.interval.getMin()==0 && this.interval.getMin()==1)){
+                this.interval.setInterval(value, value);
+            }
             this.constantValue = value;
             this.isTop = false;
         }

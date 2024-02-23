@@ -116,10 +116,41 @@ public class DataFlowInterval {
             TreeMap<String, VarInterval> preState = preStates.get(block);
             TreeMap<String, VarInterval> postState = analyzeBlock(block, preState, processedBlocks);
             postStates.put(block, postState);
+//            printVariableIntervals(block, "After Analysis", postState);
 
             for (String successor : blockSuccessors.getOrDefault(block, new LinkedList<>())) {
+                if(successor.equals("bb3")){
+                    String a = "";
+                }
                 TreeMap<String, VarInterval> successorPreState = preStates.get(successor);
-                TreeMap<String, VarInterval> joinedState = joinMaps(successorPreState, postState);
+//                printVariableIntervals(successor, "successorPreState", successorPreState);
+
+                TreeMap<String, VarInterval> newState = new TreeMap<>(successorPreState);
+                for (Map.Entry<String, VarInterval> entry : successorPreState.entrySet()) {
+                    String varName = entry.getKey();
+                    VarInterval originalVarState = entry.getValue().clone();
+                    newState.put(varName, originalVarState);
+                }
+
+                if (loopHeaders.contains(successor)) {
+                    for (Map.Entry<String, VarInterval> entry : successorPreState.entrySet()) {
+                        String varName = entry.getKey();
+                        VarInterval originalVarState = entry.getValue();
+                        Interval widenedInterval = originalVarState.getInterval();
+                        if (postState.containsKey(varName)) {
+                            Interval prevStateInterval = postState.get(varName).getInterval();
+                            widenedInterval = originalVarState.getInterval().widen(prevStateInterval);
+                            VarInterval widenedVarState = originalVarState.clone();
+                            widenedVarState.setInterval(widenedInterval);
+                            newState.put(varName, widenedVarState);
+                        }
+
+                    }
+//                    printVariableIntervals(successor, "After loopHeaders Widening", successorPreState);
+                }
+                TreeMap<String, VarInterval> joinedState = joinMaps(newState, postState);
+//                printVariableIntervals(successor, "After Joins PreStates", joinedState);
+
                 if (!joinedState.equals(successorPreState) || postState.isEmpty()) {
                     preStates.put(successor, joinedState);
                     if (!worklist.contains(successor)) {
@@ -137,6 +168,24 @@ public class DataFlowInterval {
         printAnalysisResults(processedBlocks, postStates);
     }
 
+    private static void printVariableIntervals(String block, String stage, TreeMap<String, VarInterval> state) {
+        VarInterval iVarState = state.get("i");
+        VarInterval t9VarState = state.get("_t9");
+
+        System.out.println("Block: " + block + ", Stage: " + stage);
+        if (iVarState != null) {
+            System.out.println("i interval: " + iVarState.getInterval());
+        } else {
+            System.out.println("i interval: Buttom");
+        }
+        if (t9VarState != null) {
+            System.out.println("_t9 interval: " + t9VarState.getInterval());
+        } else {
+            System.out.println("_t9 interval: Buttom");
+        }
+        System.out.println();
+    }
+
     private static TreeMap<String, VarInterval> analyzeBlock(String block, TreeMap<String, VarInterval> pState, Set<String> processedBlocks) {
         TreeMap<String, VarInterval> postState = new TreeMap<>();
         for (Map.Entry<String, VarInterval> entry : pState.entrySet()) {
@@ -145,18 +194,6 @@ public class DataFlowInterval {
         }
         for (Operation operation : basicBlocks.get(block)) {
             analyzeInstruction(postState, processedBlocks ,operation);
-        }
-        if (loopHeaders.contains(block)) {
-            for (Map.Entry<String, VarInterval> entry : postState.entrySet()) {
-                String varName = entry.getKey();
-                if(varName.equals("i")){
-                    String a = "";
-                }
-                Interval currentInterval = entry.getValue().getInterval();
-                Interval prevStateInterval = pState.get(varName).getInterval();
-                Interval widenedInterval = currentInterval.widen(prevStateInterval);
-                postState.get(varName).setInterval(widenedInterval);
-            }
         }
         return postState;
     }
@@ -192,6 +229,9 @@ public class DataFlowInterval {
         Matcher matcher = operationPattern.matcher(instruction);
         String[] parts = instruction.split(" ");
         String leftVar = parts[0];
+        if(leftVar.equals("_t9")){
+            String a = "";
+        }
         if (matcher.find()) {
             String opera = matcher.group(1);
             switch (opera) {
@@ -264,7 +304,8 @@ public class DataFlowInterval {
                                 updateVar.markAsBottom();
                             }else {
                                 updateVar.markAsTop();
-                                updateVar.setInterval(new Interval(null, null));
+//                                Interval merger = updateVar.interval.join(updateVar.interval, copiedState.interval);
+                                updateVar.setInterval(copiedState.getInterval());
                             }
                         } else {
                             try {
@@ -467,7 +508,7 @@ public class DataFlowInterval {
     private static void handleArith(String[] parts, String leftVar, Map<String, VarInterval> postState) {
         if (parts.length < 5) return;
 
-        if(leftVar.equals("_t7")){
+        if(leftVar.equals("_t9")){
             String a = leftVar;
         }
 
@@ -742,6 +783,9 @@ public class DataFlowInterval {
                 Integer v2 = safeSubtract(val1.getMax(), val2.getMin());
                 return new Interval(v1, v2);
             case "mul":
+                if ((val1.min == null || val1.max == null) || (val2.min == null || val2.max == null)) {
+                    return new Interval(null, null); // (-∞, +∞)
+                }
                 Integer[] results = new Integer[]{
                         safeMultiply(val1.getMin(), val2.getMin()),
                         safeMultiply(val1.getMin(), val2.getMax()),
